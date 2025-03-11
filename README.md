@@ -4,9 +4,9 @@
 
 <div align="center">
 
-| [강원우](https://github.com/jungse8609) | [조현진](https://github.com/CHAINSAW1234) |
+| [강원우](https://github.com/201924407) | [조현진](https://github.com/CHAINSAW1234) |
 | :---------------------------------------: | :------------------------------------: |
-| <img src="https://github.com/jungse8609.png" width="100"> | <img src="https://github.com/CHAINSAW1234.png" width="100"> |
+| <img src="https://github.com/201924407.png" width="100"> | <img src="https://github.com/CHAINSAW1234.png" width="100"> |
 
 </div>
 
