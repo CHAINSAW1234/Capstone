@@ -20,15 +20,6 @@ namespace FireEvacuation
         public Volume globalVolume;
         private Vignette vignette;
 
-        [Header("문 설정")]
-        public GameObject doorObject; // 문 오브젝트
-        public Collider doorHandle1; // 문 손잡이 1
-        public Collider doorHandle2; // 문 손잡이 2
-
-        [Header("트리거 설정")]
-        public GameObject frontDoorTrigger; // 문 앞 트리거
-        public GameObject backDoorTrigger; // 문 반대편 트리거
-
         [Header("안내도 설정")]
         public GameObject evacuationMap; // 탈출 경로 안내도 오브젝트
 
@@ -47,11 +38,6 @@ namespace FireEvacuation
         public int soundClipIndex = 0; // 재생할 Clip 인덱스
         public bool loopSound = false; // 사운드 루프 여부
 
-        // 문 관련 변수
-        private Rigidbody doorRb;
-        private HingeJoint hingeJoint;
-        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorGrabInteractable;
-
         // 버튼 관련 변수
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable buttonInteractable;
         private Rigidbody buttonRb;
@@ -61,9 +47,7 @@ namespace FireEvacuation
         private bool isButtonPressed = false;
         private bool isButtonTriggerActivated = false;
 
-        // 트리거 상태 변수
-        private bool hasReachedFrontDoorTrigger = false;
-        private bool hasReachedBackDoorTrigger = false;
+        // 안내도 상태 변수
         private bool hasHighlightedMap = false;
 
         // UnityEvent로 버튼 눌림 이벤트 처리
@@ -71,17 +55,14 @@ namespace FireEvacuation
 
         private void Start()
         {
-            // 문 초기화
-            SetupDoor();
-
             // 버튼 초기화
             SetupButton();
 
             // 후처리 초기화
             InitPostProcessing();
 
-            // 트리거 초기화
-            SetupTriggers();
+            // 안내도 초기화
+            SetupEvacuationMap();
 
             // Find the player's head Transform if not assigned
             if (headTransform == null)
@@ -96,60 +77,9 @@ namespace FireEvacuation
                     Debug.Log("Head Transform assigned: " + headTransform.name);
                 }
             }
-        }
 
-        void SetupDoor()
-        {
-            if (doorObject == null)
-            {
-                Debug.LogError("문 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-
-            // Rigidbody 설정
-            doorRb = doorObject.GetComponent<Rigidbody>();
-            if (doorRb == null)
-            {
-                doorRb = doorObject.AddComponent<Rigidbody>();
-            }
-            doorRb.mass = 1f;
-            doorRb.angularDamping = 0.05f;
-            doorRb.useGravity = true;
-            doorRb.isKinematic = false;
-            doorRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-
-            // HingeJoint 설정
-            hingeJoint = doorObject.GetComponent<HingeJoint>();
-            if (hingeJoint == null)
-            {
-                hingeJoint = doorObject.AddComponent<HingeJoint>();
-            }
-            hingeJoint.anchor = new Vector3(0, 1, 0.4f);
-            hingeJoint.axis = new Vector3(0, 1, 0);
-            hingeJoint.useLimits = true;
-            JointLimits limits = hingeJoint.limits;
-            limits.min = -120f;
-            limits.max = 0f;
-            limits.bounciness = 0f;
-            limits.bounceMinVelocity = 0.2f;
-            limits.contactDistance = 0f;
-            hingeJoint.limits = limits;
-
-            // XR Grab Interactable 설정
-            doorGrabInteractable = doorObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            if (doorGrabInteractable == null)
-            {
-                doorGrabInteractable = doorObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            }
-            doorGrabInteractable.colliders.Clear();
-            if (doorHandle1 != null) doorGrabInteractable.colliders.Add(doorHandle1);
-            if (doorHandle2 != null) doorGrabInteractable.colliders.Add(doorHandle2);
-            doorGrabInteractable.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.VelocityTracking;
-            doorGrabInteractable.trackPosition = true;
-            doorGrabInteractable.trackRotation = true;
-            doorGrabInteractable.throwOnDetach = true;
-
-            Debug.Log("✅ 문 설정 완료.");
+            // 시퀀스 시작
+            StartCoroutine(EvacuationSequence());
         }
 
         void SetupButton()
@@ -221,14 +151,8 @@ namespace FireEvacuation
             }
         }
 
-        void SetupTriggers()
+        void SetupEvacuationMap()
         {
-            if (frontDoorTrigger == null || backDoorTrigger == null)
-            {
-                Debug.LogError("문 앞/뒤 트리거가 지정되지 않았습니다!");
-                return;
-            }
-
             if (evacuationMap == null)
             {
                 Debug.LogError("탈출 경로 안내도 오브젝트가 지정되지 않았습니다!");
@@ -260,9 +184,6 @@ namespace FireEvacuation
             {
                 fireAlarmButton.transform.localPosition = Vector3.Lerp(fireAlarmButton.transform.localPosition, buttonInitialPosition, Time.deltaTime * returnSpeed);
             }
-
-            // 트리거 충돌 확인 (플레이어가 트리거에 들어왔는지 확인)
-            CheckTriggerCollision();
         }
 
         void CheckButtonTriggerCollision()
@@ -289,51 +210,8 @@ namespace FireEvacuation
             }
         }
 
-        void CheckTriggerCollision()
+        IEnumerator EvacuationSequence()
         {
-            // 플레이어의 머리 위치를 기준으로 트리거 충돌 확인
-            if (headTransform == null) return;
-
-            // 문 앞 트리거 확인
-            if (!hasReachedFrontDoorTrigger)
-            {
-                Collider frontTriggerCollider = frontDoorTrigger.GetComponent<Collider>();
-                if (frontTriggerCollider != null && frontTriggerCollider.bounds.Contains(headTransform.position))
-                {
-                    hasReachedFrontDoorTrigger = true;
-                    StartCoroutine(FrontDoorSequence());
-                }
-            }
-
-            // 문 반대편 트리거 확인
-            if (!hasReachedBackDoorTrigger)
-            {
-                Collider backTriggerCollider = backDoorTrigger.GetComponent<Collider>();
-                if (backTriggerCollider != null && backTriggerCollider.bounds.Contains(headTransform.position))
-                {
-                    hasReachedBackDoorTrigger = true;
-                    StartCoroutine(BackDoorSequence());
-                }
-            }
-        }
-
-        IEnumerator FrontDoorSequence()
-        {
-            ShowSubtitle("잠깐! 문을 열기 전에 문 손잡이의 온도를 확인하는 게 중요해요.");
-            yield return new WaitForSeconds(textDelay);
-
-            ShowSubtitle("문 손잡이가 뜨겁다면 반대편에 불이 가까이 있다는 신호예요!");
-            yield return new WaitForSeconds(textDelay);
-
-            ShowSubtitle("지금은 괜찮은 것 같네요. 문 손잡이를 잡고 문을 열어보세요.");
-            yield return new WaitForSeconds(textDelay);
-        }
-
-        IEnumerator BackDoorSequence()
-        {
-            ShowSubtitle("잘했어요! 이제 탈출구로 이동해봅시다!");
-            yield return new WaitForSeconds(textDelay);
-
             ShowSubtitle("탈출하기 전에, 건물에 탈출 경로 안내도가 있다면 꼭 확인해야 해요.");
             yield return new WaitForSeconds(textDelay);
 

@@ -4,6 +4,7 @@ using TMPro;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using UnityEngine.Events;
+using UnityEngine.XR.Interaction.Toolkit;
 
 namespace FireEvacuation
 {
@@ -29,6 +30,13 @@ namespace FireEvacuation
         public Transform headTransform; // Reference to XR Rig's Main Camera
         public float protectionDistance = 0.2f; // Detection distance from head
 
+        [Header("문 설정")]
+        public GameObject doorObject; // 문 오브젝트
+        public Collider doorHandle1; // 문 손잡이 1
+        public Collider doorHandle2; // 문 손잡이 2
+        public GameObject frontDoorTrigger; // 문 앞 트리거
+        public GameObject backDoorTrigger; // 문 반대편 트리거
+
         // Timer-related variables
         public float waterSearchTime = 15f; // User-configurable time to find water
         private float searchTimer = 0f;
@@ -44,13 +52,20 @@ namespace FireEvacuation
         // Rag 관련 변수
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
         private Renderer cubeRenderer;
-        private bool isWet = false;
         private bool isProtecting = false;
-        private bool hasRagBeenGrabbed = false; // 헝겊이 처음 그랩되었는지 추적
 
-        // 이벤트가 한 번만 호출되도록 추적
-        private bool hasProtectionActivated = false; // 활성화 이벤트가 호출되었는지
-        private bool hasProtectionDeactivated = false; // 비활성화 이벤트가 호출되었는지
+        // 문 관련 변수
+        private Rigidbody doorRb;
+        private HingeJoint hingeJoint;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorGrabInteractable;
+
+        // 시나리오 진행 상태 추적
+        private bool hasFireRecognized = false; // 화재 인지 완료
+        private bool hasRagGrabbed = false; // 헝겊 그랩 완료
+        private static bool hasRagWetted = false; // 헝겊 물에 적심 완료
+        private bool hasProtectionActivated = false; // 호흡 보호 활성화 완료
+        private bool hasReachedFrontDoor = false; // 문 앞 트리거 도달
+        private bool hasReachedBackDoor = false; // 문 반대편 트리거 도달
 
         private void Start()
         {
@@ -59,6 +74,9 @@ namespace FireEvacuation
 
             // Post-Processing 초기화
             InitPostProcessing();
+
+            // 문 초기화
+            SetupDoor();
 
             // 시퀀스 시작
             StartCoroutine(DrillSequence());
@@ -128,15 +146,70 @@ namespace FireEvacuation
             }
         }
 
+        void SetupDoor()
+        {
+            if (doorObject == null)
+            {
+                Debug.LogError("문 오브젝트가 지정되지 않았습니다!");
+                return;
+            }
+
+            // Rigidbody 설정
+            doorRb = doorObject.GetComponent<Rigidbody>();
+            if (doorRb == null)
+            {
+                doorRb = doorObject.AddComponent<Rigidbody>();
+            }
+            doorRb.mass = 1f;
+            doorRb.angularDamping = 0.05f;
+            doorRb.useGravity = true;
+            doorRb.isKinematic = false;
+            doorRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+
+            // HingeJoint 설정
+            hingeJoint = doorObject.GetComponent<HingeJoint>();
+            if (hingeJoint == null)
+            {
+                hingeJoint = doorObject.AddComponent<HingeJoint>();
+            }
+            hingeJoint.anchor = new Vector3(0, 1, 0.4f);
+            hingeJoint.axis = new Vector3(0, 1, 0);
+            hingeJoint.useLimits = true;
+            JointLimits limits = hingeJoint.limits;
+            limits.min = -120f;
+            limits.max = 0f;
+            limits.bounciness = 0f;
+            limits.bounceMinVelocity = 0.2f;
+            limits.contactDistance = 0f;
+            hingeJoint.limits = limits;
+
+            // XR Grab Interactable 설정
+            doorGrabInteractable = doorObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            if (doorGrabInteractable == null)
+            {
+                doorGrabInteractable = doorObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            }
+            doorGrabInteractable.colliders.Clear();
+            if (doorHandle1 != null) doorGrabInteractable.colliders.Add(doorHandle1);
+            if (doorHandle2 != null) doorGrabInteractable.colliders.Add(doorHandle2);
+            doorGrabInteractable.movementType = UnityEngine.XR.Interaction.Toolkit.Interactables.XRBaseInteractable.MovementType.VelocityTracking;
+            doorGrabInteractable.trackPosition = true;
+            doorGrabInteractable.trackRotation = true;
+            doorGrabInteractable.throwOnDetach = true;
+            doorGrabInteractable.enabled = false; // Initially disable door interaction
+
+            Debug.Log("✅ 문 설정 완료.");
+        }
+
         IEnumerator DrillSequence()
         {
-            ShowSubtitle("화재 대피 시스템에 온 걸 환영해!");
+            ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이 교육에서는 아파트 상황을 전제로 화재 대피 시 주의할 점들을 배워볼 거야.");
+            ShowSubtitle("이 훈련에서는 아파트 화재 상황에서 안전하게 대피하는 방법을 배웁니다.");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("천천히 교육을 따라오면서 안전한 대피 지식을 쌓아보자.");
+            ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
             yield return new WaitForSeconds(textDelay);
 
             // 사이렌 재생 및 비네팅 효과
@@ -159,12 +232,13 @@ namespace FireEvacuation
 
             yield return EnableVignetteEffect();
 
-            yield return FlashingSubtitle("현재 건물에 화재가 발생해 경보가 울렸어!", 0.6f);
+            yield return FlashingSubtitle("건물에 화재가 발생했습니다! 경보를 들어보세요!", 0.6f);
+            hasFireRecognized = true; // 화재 인지 완료
 
-            ShowSubtitle("먼저 대피 시 호흡을 보호할 도구가 필요해!");
+            ShowSubtitle("먼저 호흡을 보호하기 위해 헝겊을 찾아야 합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("주변에 헝겊으로 사용할 물건이 있는지 찾아보자.");
+            ShowSubtitle("주변에서 헝겊으로 사용할 물건을 찾아보세요!");
             yield return new WaitForSeconds(textDelay);
 
             // Vignette 효과 활성화 (호흡 보호 비활성화 상태)
@@ -177,15 +251,18 @@ namespace FireEvacuation
 
         void OnRagGrabbed(UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs args)
         {
-            if (!hasRagBeenGrabbed) // 헝겊이 처음 그랩되었을 때만 실행
+            if (!hasFireRecognized)
             {
-                hasRagBeenGrabbed = true;
-                if (subtitleText != null)
-                {
-                    subtitleText.text = "이제 수건을 물에 적셔야 해요!";
-                    isSearchingForWater = true;
-                    searchTimer = waterSearchTime;
-                }
+                ShowSubtitle("먼저 화재를 인지하세요! 경보를 듣고 상황을 파악하세요!");
+                return;
+            }
+
+            if (!hasRagGrabbed)
+            {
+                hasRagGrabbed = true;
+                ShowSubtitle("잘했어요! 이제 헝겊을 물에 적셔야 합니다!");
+                isSearchingForWater = true;
+                searchTimer = waterSearchTime;
             }
         }
 
@@ -205,9 +282,9 @@ namespace FireEvacuation
             // Handle wetting timer
             if (isWetting)
             {
-                Debug.Log($"Wetting in progress: wetTimer = {wetTimer}, isWet = {isWet}");
+                Debug.Log($"Wetting in progress: wetTimer = {wetTimer}, hasRagWetted = {hasRagWetted}");
                 wetTimer += Time.deltaTime;
-                if (wetTimer >= wetTimeRequired && !isWet)
+                if (wetTimer >= wetTimeRequired && !hasRagWetted)
                 {
                     WetRag();
                     isWetting = false;
@@ -215,11 +292,22 @@ namespace FireEvacuation
             }
 
             // Breathing protection check
-            if (isWet && headTransform != null)
+            if (headTransform != null && ragObject != null)
             {
                 float distanceToHead = Vector3.Distance(ragObject.transform.position, headTransform.position);
                 if (!isProtecting && distanceToHead <= protectionDistance)
                 {
+                    Debug.Log($"Distance Check called. hasRagWetted :  {hasRagWetted}");
+                    if (!hasRagGrabbed)
+                    {
+                        ShowSubtitle("먼저 헝겊을 집어주세요!");
+                        return;
+                    }
+                    if (!hasRagWetted)
+                    {
+                        ShowSubtitle("먼저 헝겊을 물에 적셔야 합니다!");
+                        return;
+                    }
                     SetProtectionState(true);
                 }
                 else if (isProtecting && distanceToHead > protectionDistance)
@@ -227,35 +315,84 @@ namespace FireEvacuation
                     SetProtectionState(false);
                 }
             }
+
+            // Door trigger collision check
+            CheckTriggerCollision();
+        }
+
+        void CheckTriggerCollision()
+        {
+            if (headTransform == null) return;
+
+            // 문 앞 트리거 확인
+            if (!hasReachedFrontDoor)
+            {
+                Collider frontTriggerCollider = frontDoorTrigger.GetComponent<Collider>();
+                if (frontTriggerCollider != null && frontTriggerCollider.bounds.Contains(headTransform.position))
+                {
+                    if (!hasRagGrabbed)
+                    {
+                        ShowSubtitle("먼저 헝겊을 집어주세요!");
+                        return;
+                    }
+                    if (!hasRagWetted)
+                    {
+                        ShowSubtitle("먼저 헝겊을 물에 적셔야 합니다!");
+                        return;
+                    }
+                    if (!hasProtectionActivated)
+                    {
+                        ShowSubtitle("먼저 호흡 보호를 위해 젖은 헝겊을 입에 대세요!");
+                        return;
+                    }
+                    hasReachedFrontDoor = true;
+                    StartCoroutine(FrontDoorSequence());
+                }
+            }
+
+            // 문 반대편 트리거 확인
+            if (!hasReachedBackDoor)
+            {
+                Collider backTriggerCollider = backDoorTrigger.GetComponent<Collider>();
+                if (backTriggerCollider != null && backTriggerCollider.bounds.Contains(headTransform.position))
+                {
+                    if (!hasReachedFrontDoor)
+                    {
+                        ShowSubtitle("먼저 문 손잡이의 온도를 확인하고 문을 열어야 합니다!");
+                        return;
+                    }
+                    hasReachedBackDoor = true;
+                    StartCoroutine(BackDoorSequence());
+                }
+            }
         }
 
         void OnTriggerEnter(Collider other)
         {
             Debug.Log($"OnTriggerEnter called with {other.gameObject.name}");
-            if (other.gameObject == waterObject && !isWet)
+            if (other.gameObject == waterObject && !hasRagWetted)
             {
+                if (!hasRagGrabbed)
+                {
+                    ShowSubtitle("먼저 헝겊을 집어주세요!");
+                    return;
+                }
                 Debug.Log("Water detected, starting to wet the rag.");
                 isSearchingForWater = false;
                 isWetting = true;
                 wetTimer = 0f;
-                if (subtitleText != null)
-                {
-                    subtitleText.text = "잘했어! 충분한 시간동안 수건을 적시자.";
-                }
+                ShowSubtitle("잘했어요! 5초 동안 헝겊을 물에 적셔주세요!");
             }
         }
 
         void OnTriggerExit(Collider other)
         {
             Debug.Log($"OnTriggerExit called with {other.gameObject.name}");
-            if (other.gameObject == waterObject && !isWet)
+            if (other.gameObject == waterObject && !hasRagWetted)
             {
                 Debug.Log("Water exited, stopping wetting process.");
                 isWetting = false;
-                if (subtitleText != null)
-                {
-                    subtitleText.text = "수건을 충분히 적셔야해! 5초 이상 유지해보자!";
-                }
+                ShowSubtitle("헝겊을 5초 이상 물에 적셔야 합니다!");
             }
         }
 
@@ -263,7 +400,7 @@ namespace FireEvacuation
         {
             if (subtitleText != null)
             {
-                subtitleText.color = Color.black; // 자막 색상을 검정색으로 변경
+                subtitleText.color = Color.black;
                 subtitleText.text = message;
             }
         }
@@ -293,7 +430,7 @@ namespace FireEvacuation
 
             if (subtitleText != null)
             {
-                subtitleText.color = Color.black; // 깜빡임 종료 후 검정색으로 변경
+                subtitleText.color = Color.black;
                 subtitleText.text = text;
             }
         }
@@ -320,17 +457,33 @@ namespace FireEvacuation
             vignette.intensity.Override(target);
         }
 
+        IEnumerator FrontDoorSequence()
+        {
+            ShowSubtitle("문 손잡이의 온도를 먼저 확인해야 합니다!");
+            yield return new WaitForSeconds(textDelay);
+
+            ShowSubtitle("문 손잡이가 뜨겁다면 반대편에 불이 있을 수 있습니다!");
+            yield return new WaitForSeconds(textDelay);
+
+            ShowSubtitle("지금은 안전합니다! 문 손잡이를 잡고 문을 열어보세요!");
+            yield return new WaitForSeconds(textDelay);
+        }
+
+        IEnumerator BackDoorSequence()
+        {
+            ShowSubtitle("잘했어요! 이제 탈출구로 이동하세요!");
+            yield return new WaitForSeconds(textDelay);
+        }
+
         void WetRag()
         {
-            isWet = true;
+            hasRagWetted = true;
             if (cubeRenderer != null)
             {
                 cubeRenderer.material.color = Color.green;
             }
-            if (subtitleText != null)
-            {
-                subtitleText.text = "수건이 젖었어요! 이제 입 주변에 대보세요.";
-            }
+            Debug.Log($"WetRag called. hasRagWetted :  {hasRagWetted}");
+            ShowSubtitle("잘했어요! 이제 젖은 헝겊을 입 주변에 대보세요!");
         }
 
         void HighlightWater()
@@ -343,10 +496,7 @@ namespace FireEvacuation
                     waterRenderer.material.color = Color.yellow;
                 }
             }
-            if (subtitleText != null)
-            {
-                subtitleText.text = "물이 어디 있는지 찾아보세요!";
-            }
+            ShowSubtitle("물이 있는 곳을 찾아 헝겊을 적셔보세요!");
         }
 
         void SetProtectionState(bool state)
@@ -357,49 +507,38 @@ namespace FireEvacuation
             }
 
             isProtecting = state;
-            if (subtitleText != null)
+            if (isProtecting)
             {
-                if (isProtecting)
+                ShowSubtitle("잘했어요! 호흡 보호가 활성화되었습니다!");
+                if (!hasProtectionActivated)
                 {
-                    subtitleText.text = "호흡 보호가 활성화되었어요!";
-                    if (!hasProtectionActivated)
+                    onProtectionActivated?.Invoke();
+                    hasProtectionActivated = true;
+                    if (doorGrabInteractable != null)
                     {
-                        onProtectionActivated?.Invoke();
-                        hasProtectionActivated = true;
-                        hasProtectionDeactivated = false;
-                        // 5초 뒤에 다음 텍스트를 표시하기 위해 코루틴 시작
-                        StartCoroutine(ShowNextSubtitleAfterDelay());
+                        doorGrabInteractable.enabled = true; // Enable door interaction
+                        Debug.Log("✅ 문 상호작용 활성화.");
                     }
-                    if (vignette != null)
-                    {
-                        vignette.intensity.Override(0f);
-                    }
+                    StartCoroutine(ShowNextSubtitleAfterDelay());
                 }
-                else
+                if (vignette != null)
                 {
-                    // 비활성화 텍스트 제거
-                    if (!hasProtectionDeactivated)
-                    {
-                        onProtectionDeactivated?.Invoke();
-                        hasProtectionDeactivated = true;
-                        hasProtectionActivated = false;
-                    }
-                    if (vignette != null)
-                    {
-                        vignette.intensity.Override(0.5f);
-                    }
+                    vignette.intensity.Override(0f);
+                }
+            }
+            else
+            {
+                if (vignette != null)
+                {
+                    vignette.intensity.Override(0.5f);
                 }
             }
         }
 
-        // 5초 뒤에 다음 텍스트를 표시하는 코루틴
         private IEnumerator ShowNextSubtitleAfterDelay()
         {
             yield return new WaitForSeconds(5f);
-            if (subtitleText != null)
-            {
-                subtitleText.text = "다음은 탈출을 위해 밖으로 나갈 수 있는 출입문을 찾아보자";
-            }
+            ShowSubtitle("다음은 탈출을 위해 출입문을 찾아보세요!");
         }
 
         public void SetWaterSearchTime(float time)
