@@ -8,27 +8,27 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace FireEvacuation
 {
-#pragma warning disable 0618 // Suppress obsolete warning for XRBaseController
+#pragma warning disable 0618 // XRBaseController에 대한 폐기 경고 억제
 
     public class Section1 : MonoBehaviour
     {
         [Header("UI 설정")]
-        public TMP_Text subtitleText;
-        public float textDelay = 5f;
+        public TMP_Text subtitleText; // 자막 텍스트 UI
+        public float textDelay = 5f; // 자막 표시 지연 시간 (초)
 
         [Header("사운드 설정")]
         public int sirenGroupIndex = 0; // 사운드 그룹 인덱스 (Inspector에서 설정)
-        public int sirenClipIndex = 0;
+        public int sirenClipIndex = 0; // 재생할 클립 인덱스
 
         [Header("후처리 효과")]
-        public Volume globalVolume;
-        private Vignette vignette;
+        public Volume globalVolume; // 전역 볼륨 (후처리 효과)
+        private Vignette vignette; // 비네트 효과
 
         [Header("Rag 설정")]
         public GameObject ragObject; // Inspector에서 할당할 Rag 오브젝트
         public GameObject waterObject; // Inspector에서 할당할 Water 오브젝트
-        public Transform headTransform; // Reference to XR Rig's Main Camera
-        public float protectionDistance = 0.2f; // Detection distance from head
+        public Transform headTransform; // XR Rig의 Main Camera 참조
+        public float protectionDistance = 0.2f; // 머리와의 보호 감지 거리
 
         [Header("문 설정")]
         public GameObject doorObject; // 문 오브젝트
@@ -37,17 +37,17 @@ namespace FireEvacuation
         public GameObject frontDoorTrigger; // 문 앞 트리거
         public GameObject backDoorTrigger; // 문 반대편 트리거
 
-        // Timer-related variables
-        public float waterSearchTime = 15f; // User-configurable time to find water
+        // 타이머 관련 변수
+        public float waterSearchTime = 15f; // 물 찾기 시간 (사용자 설정 가능)
         private float searchTimer = 0f;
         private bool isSearchingForWater = false;
-        private float wetTimeRequired = 5f; // Time required to wet the rag
+        private float wetTimeRequired = 5f; // 헝겊을 적시는 데 필요한 시간
         private float wetTimer = 0f;
         private bool isWetting = false;
 
         // UnityEvent로 변경하여 Inspector에서 설정 가능
-        [SerializeField] public UnityEvent onProtectionActivated; // Inspector에서 설정 가능한 이벤트
-        [SerializeField] public UnityEvent onProtectionDeactivated; // Inspector에서 설정 가능한 이벤트
+        [SerializeField] public UnityEvent onProtectionActivated; // 호흡 보호 활성화 이벤트
+        [SerializeField] public UnityEvent onProtectionDeactivated; // 호흡 보호 비활성화 이벤트
 
         // Rag 관련 변수
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
@@ -60,19 +60,20 @@ namespace FireEvacuation
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorGrabInteractable;
 
         // 시나리오 진행 상태 추적
-        private bool hasFireRecognized = false; // 화재 인지 완료
-        private bool hasRagGrabbed = false; // 헝겊 그랩 완료
-        private static bool hasRagWetted = false; // 헝겊 물에 적심 완료
-        private bool hasProtectionActivated = false; // 호흡 보호 활성화 완료
-        private bool hasReachedFrontDoor = false; // 문 앞 트리거 도달
-        private bool hasReachedBackDoor = false; // 문 반대편 트리거 도달
+        private bool hasFireRecognized = false; // 화재 인지 완료 여부
+        private bool hasRagGrabbed = false; // 헝겊 그랩 완료 여부
+        private static bool hasRagWetted = false; // 헝겊 물에 적심 완료 여부 (정적 변수로 유지)
+        private bool hasProtectionActivated = false; // 호흡 보호 활성화 완료 여부
+        private bool hasShownProtectionMessage = false; // 호흡 보호 메시지 출력 여부
+        private bool hasReachedFrontDoor = false; // 문 앞 트리거 도달 여부
+        private bool hasReachedBackDoor = false; // 문 반대편 트리거 도달 여부
 
         private void Start()
         {
             // Rag 초기화
             InitializeRag();
 
-            // Post-Processing 초기화
+            // 후처리 초기화
             InitPostProcessing();
 
             // 문 초기화
@@ -108,8 +109,8 @@ namespace FireEvacuation
             }
             else
             {
-                cubeRenderer.material = new Material(cubeRenderer.material); // Material instantiation
-                cubeRenderer.material.color = Color.red; // Initial color (red)
+                cubeRenderer.material = new Material(cubeRenderer.material); // Material 인스턴스화
+                cubeRenderer.material.color = Color.red; // 초기 색상 (빨간색)
             }
 
             if (waterObject == null)
@@ -129,7 +130,11 @@ namespace FireEvacuation
 
             if (headTransform == null)
             {
-                headTransform = GameObject.Find("Main Camera").transform; // XR Rig's camera
+                headTransform = GameObject.Find("Main Camera")?.transform; // XR Rig의 카메라
+                if (headTransform == null)
+                {
+                    Debug.LogError("Main Camera를 찾을 수 없습니다! Inspector에서 Head Transform을 수동으로 지정해주세요.");
+                }
             }
         }
 
@@ -196,7 +201,7 @@ namespace FireEvacuation
             doorGrabInteractable.trackPosition = true;
             doorGrabInteractable.trackRotation = true;
             doorGrabInteractable.throwOnDetach = true;
-            doorGrabInteractable.enabled = false; // Initially disable door interaction
+            doorGrabInteractable.enabled = false; // 초기에는 문 상호작용 비활성화
 
             Debug.Log("✅ 문 설정 완료.");
         }
@@ -268,7 +273,7 @@ namespace FireEvacuation
 
         void Update()
         {
-            // Handle water search timer
+            // 물 찾기 타이머 처리
             if (isSearchingForWater)
             {
                 searchTimer -= Time.deltaTime;
@@ -279,10 +284,10 @@ namespace FireEvacuation
                 }
             }
 
-            // Handle wetting timer
+            // 헝겊 적시기 타이머 처리
             if (isWetting)
             {
-                Debug.Log($"Wetting in progress: wetTimer = {wetTimer}, hasRagWetted = {hasRagWetted}");
+                Debug.Log($"적시는 중: wetTimer = {wetTimer}, hasRagWetted = {hasRagWetted}");
                 wetTimer += Time.deltaTime;
                 if (wetTimer >= wetTimeRequired && !hasRagWetted)
                 {
@@ -291,13 +296,13 @@ namespace FireEvacuation
                 }
             }
 
-            // Breathing protection check
+            // 호흡 보호 상태 확인
             if (headTransform != null && ragObject != null)
             {
                 float distanceToHead = Vector3.Distance(ragObject.transform.position, headTransform.position);
                 if (!isProtecting && distanceToHead <= protectionDistance)
                 {
-                    Debug.Log($"Distance Check called. hasRagWetted :  {hasRagWetted}");
+                    Debug.Log($"거리 확인: hasRagWetted = {hasRagWetted}");
                     if (!hasRagGrabbed)
                     {
                         ShowSubtitle("먼저 헝겊을 집어주세요!");
@@ -316,7 +321,7 @@ namespace FireEvacuation
                 }
             }
 
-            // Door trigger collision check
+            // 문 트리거 충돌 확인
             CheckTriggerCollision();
         }
 
@@ -369,7 +374,7 @@ namespace FireEvacuation
 
         void OnTriggerEnter(Collider other)
         {
-            Debug.Log($"OnTriggerEnter called with {other.gameObject.name}");
+            Debug.Log($"OnTriggerEnter 호출됨: {other.gameObject.name}");
             if (other.gameObject == waterObject && !hasRagWetted)
             {
                 if (!hasRagGrabbed)
@@ -377,7 +382,7 @@ namespace FireEvacuation
                     ShowSubtitle("먼저 헝겊을 집어주세요!");
                     return;
                 }
-                Debug.Log("Water detected, starting to wet the rag.");
+                Debug.Log("물 감지됨, 헝겊 적시기 시작.");
                 isSearchingForWater = false;
                 isWetting = true;
                 wetTimer = 0f;
@@ -387,10 +392,10 @@ namespace FireEvacuation
 
         void OnTriggerExit(Collider other)
         {
-            Debug.Log($"OnTriggerExit called with {other.gameObject.name}");
+            Debug.Log($"OnTriggerExit 호출됨: {other.gameObject.name}");
             if (other.gameObject == waterObject && !hasRagWetted)
             {
-                Debug.Log("Water exited, stopping wetting process.");
+                Debug.Log("물에서 벗어남, 적시기 중단.");
                 isWetting = false;
                 ShowSubtitle("헝겊을 5초 이상 물에 적셔야 합니다!");
             }
@@ -467,11 +472,21 @@ namespace FireEvacuation
 
             ShowSubtitle("지금은 안전합니다! 문 손잡이를 잡고 문을 열어보세요!");
             yield return new WaitForSeconds(textDelay);
+
+            // 문 상호작용 활성화
+            if (doorGrabInteractable != null)
+            {
+                doorGrabInteractable.enabled = true;
+                Debug.Log("✅ 문 상호작용 활성화.");
+            }
         }
 
         IEnumerator BackDoorSequence()
         {
-            ShowSubtitle("잘했어요! 이제 탈출구로 이동하세요!");
+            ShowSubtitle("잘했어요! 문을 통과했습니다!");
+            yield return new WaitForSeconds(textDelay);
+
+            ShowSubtitle("이제 건물 밖으로 대피해볼까요.");
             yield return new WaitForSeconds(textDelay);
         }
 
@@ -482,7 +497,7 @@ namespace FireEvacuation
             {
                 cubeRenderer.material.color = Color.green;
             }
-            Debug.Log($"WetRag called. hasRagWetted :  {hasRagWetted}");
+            Debug.Log($"헝겊 적시기 완료. hasRagWetted: {hasRagWetted}");
             ShowSubtitle("잘했어요! 이제 젖은 헝겊을 입 주변에 대보세요!");
         }
 
@@ -509,16 +524,15 @@ namespace FireEvacuation
             isProtecting = state;
             if (isProtecting)
             {
-                ShowSubtitle("잘했어요! 호흡 보호가 활성화되었습니다!");
+                if (!hasShownProtectionMessage) // 메시지가 아직 출력되지 않았을 때만 표시
+                {
+                    ShowSubtitle("잘했어요! 호흡 보호가 활성화되었습니다!");
+                    hasShownProtectionMessage = true; // 메시지 출력 플래그 설정
+                }
                 if (!hasProtectionActivated)
                 {
                     onProtectionActivated?.Invoke();
                     hasProtectionActivated = true;
-                    if (doorGrabInteractable != null)
-                    {
-                        doorGrabInteractable.enabled = true; // Enable door interaction
-                        Debug.Log("✅ 문 상호작용 활성화.");
-                    }
                     StartCoroutine(ShowNextSubtitleAfterDelay());
                 }
                 if (vignette != null)
