@@ -1,0 +1,93 @@
+﻿using UnityEngine;
+using UnityEngine.UIElements;
+using UnityEngine.XR.Interaction.Toolkit.Interactables;
+using UnityEngine.XR.Interaction.Toolkit.Interactors;
+
+public class PinController : MonoBehaviour
+{
+
+    public Transform fireExtinguisher; // 소화기 본체
+    [SerializeField]
+    private float leftLimit = 0.0f;      // z축 음수 방향 최대치 (좌측)
+    [SerializeField]
+    private float rightLimit = 0.1f;       // z축 양수 방향 최대치 (우측)
+    [SerializeField]
+    private float detachDistance = 0.1f;  // 우측으로 이만큼 이동하면 분리됨
+
+    private Vector3 transformBias;
+
+    private XRGrabInteractable grabInteractable;
+    private IXRSelectInteractor currentInteractor;
+    private bool isPulled = false;
+    private bool isGrabbed = false;
+
+    // Start is called once before the first execution of Update after the MonoBehaviour is created
+    void Start()
+    {
+        transformBias = transform.localPosition;
+        grabInteractable = GetComponent<XRGrabInteractable>();
+        NullCheck.Invoke(grabInteractable);
+
+        grabInteractable.selectEntered.AddListener(args =>
+        {
+            isGrabbed = true;
+            currentInteractor = args.interactorObject;
+        });
+        grabInteractable.selectExited.AddListener(args =>
+        {
+            isGrabbed = false;
+            currentInteractor = null;
+        });
+
+    }
+
+    // Update is called once per frame
+    void Update()
+    {
+        if (isPulled)
+            return;
+
+        if(isGrabbed)
+        {
+            OnPinGrabbed();
+        }
+    }
+
+    void OnPinGrabbed()
+    {
+        /// 기준: 소화기 기준 위치
+        Vector3 basePosition = fireExtinguisher.position + transformBias;
+
+        // 현재 손 위치 → 기준점까지 벡터
+        Vector3 pinToHand = currentInteractor.transform.position - basePosition;
+
+        // 소화기 기준의 right 방향으로만 투영
+        Vector3 direction = -fireExtinguisher.forward;  // 리소스따라감
+        float projectedDistance = Vector3.Dot(pinToHand, direction);
+
+        float clamped = Mathf.Clamp(projectedDistance, leftLimit, rightLimit);
+        Vector3 offset = direction * clamped;
+
+        // 최종 위치 적용: 소화기 위치 + 핀 원래 위치 오프셋 + 이동량
+        transform.position = basePosition + offset;
+
+        // 분리 조건
+        if (!isPulled && clamped >= detachDistance)
+        {
+            isPulled = true;
+            OnPinPulled();
+        }
+    }
+
+    void OnPinPulled()
+    {
+        grabInteractable.enabled = false;
+
+        Rigidbody rb = GetComponent<Rigidbody>();
+        NullCheck.Invoke(rb);
+        rb.isKinematic = false;
+        rb.useGravity = true;
+        rb.linearDamping = 0f;
+    }
+
+}
