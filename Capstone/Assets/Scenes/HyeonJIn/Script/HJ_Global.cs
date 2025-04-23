@@ -3,11 +3,12 @@ using System.Diagnostics;
 
 public static class NullCheck
 {
-    public static bool Invoke(object? obj)
+   
+    public static bool Invoke<T>(T? obj) where T : class
     {
         if(obj == null)
         {
-            LogNull(obj);
+            LogNull<T>();
             return false;
         }
 
@@ -15,9 +16,9 @@ public static class NullCheck
     }
 
     [Conditional("UNITY_EDITOR")]
-    private static void LogNull(object? obj)
-    {
-        UnityEngine.Debug.LogWarning($"[NullCheck] {obj?.GetType().Name} is null.");
+    private static void LogNull<T>()
+    {   
+        UnityEngine.Debug.LogWarning($"[NullCheck] {typeof(T).Name} is null.");
     }
 
 }

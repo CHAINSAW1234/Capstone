@@ -55,23 +55,20 @@ public class PinController : MonoBehaviour
 
     void OnPinGrabbed()
     {
-        /// 기준: 소화기 기준 위치
-        Vector3 basePosition = fireExtinguisher.position + transformBias;
-
-        // 현재 손 위치 → 기준점까지 벡터
+        Vector3 basePosition = fireExtinguisher.position + fireExtinguisher.rotation * transformBias;
         Vector3 pinToHand = currentInteractor.transform.position - basePosition;
 
-        // 소화기 기준의 right 방향으로만 투영
-        Vector3 direction = -fireExtinguisher.forward;  // 리소스따라감
-        float projectedDistance = Vector3.Dot(pinToHand, direction);
+        Vector3 moveAxis = fireExtinguisher.right;
+        float projectedDistance = Vector3.Dot(pinToHand, moveAxis);
 
+        // 거리 제한 적용
         float clamped = Mathf.Clamp(projectedDistance, leftLimit, rightLimit);
-        Vector3 offset = direction * clamped;
+        Vector3 offset = moveAxis * clamped;
 
-        // 최종 위치 적용: 소화기 위치 + 핀 원래 위치 오프셋 + 이동량
+        // 최종 위치 적용
         transform.position = basePosition + offset;
 
-        // 분리 조건
+        // 뽑힘 처리
         if (!isPulled && clamped >= detachDistance)
         {
             isPulled = true;
