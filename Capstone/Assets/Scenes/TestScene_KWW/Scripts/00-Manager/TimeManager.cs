@@ -8,6 +8,7 @@ namespace FireEvacuation
     {
         [Header("시간 표시 설정")]
         [SerializeField] private TMP_Text timerText; // 시간을 표시할 Text Mesh Pro UI
+        [SerializeField] private TMP_Text timerText2; // 시간을 표시할 Text Mesh Pro UI
         private float elapsedTime = 0f; // 경과 시간 (초 단위)
         private bool isTimerRunning = true; // 타이머가 실행 중인지 여부
 
@@ -48,6 +49,7 @@ namespace FireEvacuation
             int minutes = Mathf.FloorToInt(elapsedTime / 60f);
             int seconds = Mathf.FloorToInt(elapsedTime % 60f);
             timerText.text = $"Time: {minutes:00}:{seconds:00}";
+            timerText2.text = $"Time: {minutes:00}:{seconds:00}";
         }
 
         // 외부에서 호출하여 타이머를 멈추는 메서드
