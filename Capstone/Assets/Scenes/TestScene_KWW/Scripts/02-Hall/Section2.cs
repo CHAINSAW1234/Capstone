@@ -379,9 +379,21 @@ namespace FireEvacuation
                     SequenceManager.Instance.CompleteStep(4); // 경보 울리기 완료
                     ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동하세요!");
 
-                    if (playSoundOnButtonPress && SoundManager.Instance != null)
+                    if (playSoundOnButtonPress)
                     {
-                        SoundManager.Instance.Play(soundGroupIndex, soundClipIndex, loopSound);
+                        if (SoundManager.Instance == null)
+                        {
+                            Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
+                            return;
+                        }
+                        try
+                        {
+                            SoundManager.Instance.PlayOneShot(soundGroupIndex, soundClipIndex);
+                        }
+                        catch (System.Exception e)
+                        {
+                            Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
+                        }
                     }
                 }
             }

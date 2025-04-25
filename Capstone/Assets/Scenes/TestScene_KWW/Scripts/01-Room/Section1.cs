@@ -205,17 +205,26 @@ namespace FireEvacuation
             ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
             yield return new WaitForSeconds(textDelay);
 
+            // Wait for SoundManager to be ready
+            int maxRetries = 50; // Retry for up to 5 seconds (50 * 0.1s)
+            int retries = 0;
+            while (SoundManager.Instance == null && retries < maxRetries)
+            {
+                Debug.LogWarning("SoundManager.Instance is null. Waiting for initialization...");
+                yield return new WaitForSeconds(0.1f);
+                retries++;
+            }
+
+            if (SoundManager.Instance == null)
+            {
+                Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
+                yield break; // Exit the coroutine if SoundManager is not available
+            }
+
             try
             {
-                if (SoundManager.Instance != null)
-                {
-                    SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
-                    Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
-                }
-                else
-                {
-                    Debug.LogError("SoundManager.Instance가 null입니다!");
-                }
+                SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
+                Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
             }
             catch (System.Exception e)
             {
