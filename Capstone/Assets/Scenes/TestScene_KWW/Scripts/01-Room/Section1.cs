@@ -70,6 +70,8 @@ namespace FireEvacuation
 
         private void Start()
         {
+            // 강제로 hasRagWetted 초기화 (static 변수로 인해 테스트 중 유지될 수 있음)
+            hasRagWetted = false;
             InitializeRag();
             InitPostProcessing();
             SetupDoor();
@@ -105,6 +107,24 @@ namespace FireEvacuation
                 cubeRenderer.material.color = Color.red;
             }
 
+            // Ensure ragObject has a collider and Rigidbody
+            Collider ragCollider = ragObject.GetComponent<Collider>();
+            if (ragCollider == null)
+            {
+                ragCollider = ragObject.AddComponent<BoxCollider>();
+                Debug.LogWarning("Rag 오브젝트에 콜라이더가 없어 추가했습니다.");
+            }
+
+            Rigidbody ragRb = ragObject.GetComponent<Rigidbody>();
+            if (ragRb == null)
+            {
+                ragRb = ragObject.AddComponent<Rigidbody>();
+                ragRb.useGravity = true;
+                ragRb.isKinematic = false;
+                ragRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
+                Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
+            }
+
             if (waterObject == null)
             {
                 Debug.LogError("Water 오브젝트가 지정되지 않았습니다!");
@@ -112,6 +132,19 @@ namespace FireEvacuation
             }
             else
             {
+                Collider waterCollider = waterObject.GetComponent<Collider>();
+                if (waterCollider == null)
+                {
+                    waterCollider = waterObject.AddComponent<BoxCollider>();
+                    waterCollider.isTrigger = true;
+                    Debug.LogWarning("Water 오브젝트에 콜라이더가 없어 추가했습니다.");
+                }
+                else if (!waterCollider.isTrigger)
+                {
+                    waterCollider.isTrigger = true;
+                    Debug.LogWarning("Water 오브젝트의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
+                }
+
                 if (!waterObject.CompareTag("Water"))
                 {
                     Debug.LogWarning("Water 오브젝트에 'Water' 태그가 없습니다. 태그를 추가합니다.");
@@ -199,23 +232,32 @@ namespace FireEvacuation
             ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이 훈련에서는 아파트 화재 상황에서 안전하게 대피하는 방법을 배웁니다.");
+            ShowSubtitle("이 훈련은 아파트 화재 상황에서 안전한 대피 방법을 익히는 과정입니다.");
             yield return new WaitForSeconds(textDelay);
 
             ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
             yield return new WaitForSeconds(textDelay);
 
+            // Wait for SoundManager to be ready
+            int maxRetries = 50; // Retry for up to 5 seconds (50 * 0.1s)
+            int retries = 0;
+            while (SoundManager.Instance == null && retries < maxRetries)
+            {
+                Debug.LogWarning("SoundManager.Instance is null. Waiting for initialization...");
+                yield return new WaitForSeconds(0.1f);
+                retries++;
+            }
+
+            if (SoundManager.Instance == null)
+            {
+                Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
+                yield break; // Exit the coroutine if SoundManager is not available
+            }
+
             try
             {
-                if (SoundManager.Instance != null)
-                {
-                    SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
-                    Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
-                }
-                else
-                {
-                    Debug.LogError("SoundManager.Instance가 null입니다!");
-                }
+                SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
+                Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
             }
             catch (System.Exception e)
             {
@@ -224,14 +266,14 @@ namespace FireEvacuation
 
             yield return EnableVignetteEffect();
 
-            yield return FlashingSubtitle("건물에 화재가 발생했습니다! 경보를 들어보세요!", 0.6f);
+            yield return FlashingSubtitle("건물에 화재가 발생했습니다!", 0.6f);
             hasFireRecognized = true;
             SequenceManager.Instance.CompleteStep(0); // 상황 인지 완료
 
-            ShowSubtitle("먼저 호흡을 보호하기 위해 헝겊을 찾아야 합니다!");
+            ShowSubtitle("화재 발생 시, 가장 먼저 젖은 옷이나 수건 등의 천으로 호흡기를 보호하는 것이 중요합니다.");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("주변에서 헝겊으로 사용할 물건을 찾아보세요!");
+            ShowSubtitle("주변에서 호흡 보호에 사용할 천을 찾아보세요!");
             yield return new WaitForSeconds(textDelay);
 
             if (vignette != null)
@@ -245,7 +287,7 @@ namespace FireEvacuation
         {
             if (!hasFireRecognized)
             {
-                ShowSubtitle("먼저 화재를 인지하세요! 경보를 듣고 상황을 파악하세요!");
+                ShowSubtitle("먼저 경보를 듣고 상황을 파악하세요!");
                 SequenceManager.Instance.RecordSequenceError(1); // 호흡 보호 순서 오류
                 return;
             }
@@ -253,10 +295,11 @@ namespace FireEvacuation
             if (!hasRagGrabbed)
             {
                 hasRagGrabbed = true;
-                ShowSubtitle("잘했어요! 이제 헝겊을 물에 적셔야 합니다!");
+                ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
                 isSearchingForWater = true;
                 searchTimer = waterSearchTime;
                 SequenceManager.Instance.CompleteStep(1); // 호흡 보호 완료
+                Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
             }
         }
 
@@ -269,6 +312,30 @@ namespace FireEvacuation
                 {
                     HighlightWater();
                     isSearchingForWater = false;
+                }
+            }
+
+            // 물에 천을 넣었는지 콜라이더 겹침으로 확인
+            if (!hasRagWetted && hasRagGrabbed && ragObject != null && waterObject != null)
+            {
+                Collider ragCollider = ragObject.GetComponent<Collider>();
+                Collider waterCollider = waterObject.GetComponent<Collider>();
+                if (ragCollider != null && waterCollider != null && ragCollider.bounds.Intersects(waterCollider.bounds))
+                {
+                    if (!isWetting)
+                    {
+                        isSearchingForWater = false;
+                        isWetting = true;
+                        wetTimer = 0f;
+                        ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
+                        ShowSubtitle("잘했습니다! 이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
+                    }
+                }
+                else if (isWetting)
+                {
+                    isWetting = false;
+                    ShowSubtitle("천을 충분히 물에 적셔야 합니다!");
+                    Debug.Log("천이 물에서 나옴. isWetting: false");
                 }
             }
 
@@ -289,13 +356,13 @@ namespace FireEvacuation
                 {
                     if (!hasRagGrabbed)
                     {
-                        ShowSubtitle("먼저 헝겊을 집어주세요!");
+                        ShowSubtitle("먼저 천을 집어주세요!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 헝겊을 물에 적셔야 합니다!");
+                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
@@ -321,19 +388,19 @@ namespace FireEvacuation
                 {
                     if (!hasRagGrabbed)
                     {
-                        ShowSubtitle("먼저 헝겊을 집어주세요!");
+                        ShowSubtitle("먼저 천을 집어주세요!");
                         SequenceManager.Instance.RecordSequenceError(2); // 문 탈출 순서 오류
                         return;
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 헝겊을 물에 적셔야 합니다!");
+                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(2);
                         return;
                     }
                     if (!hasProtectionActivated)
                     {
-                        ShowSubtitle("먼저 호흡 보호를 위해 젖은 헝겊을 입에 대세요!");
+                        ShowSubtitle("먼저 호흡 보호를 위해 젖은 천을 입에 대세요!");
                         SequenceManager.Instance.RecordSequenceError(2);
                         return;
                     }
@@ -360,38 +427,17 @@ namespace FireEvacuation
             }
         }
 
-        void OnTriggerEnter(Collider other)
-        {
-            if (other.gameObject == waterObject && !hasRagWetted)
-            {
-                if (!hasRagGrabbed)
-                {
-                    ShowSubtitle("먼저 헝겊을 집어주세요!");
-                    SequenceManager.Instance.RecordSequenceError(1);
-                    return;
-                }
-                isSearchingForWater = false;
-                isWetting = true;
-                wetTimer = 0f;
-                ShowSubtitle("잘했어요! 5초 동안 헝겊을 물에 적셔주세요!");
-            }
-        }
-
-        void OnTriggerExit(Collider other)
-        {
-            if (other.gameObject == waterObject && !hasRagWetted)
-            {
-                isWetting = false;
-                ShowSubtitle("헝겊을 5초 이상 물에 적셔야 합니다!");
-            }
-        }
-
         void ShowSubtitle(string message)
         {
             if (subtitleText != null)
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
+                Debug.Log($"자막 표시: {message}");
+            }
+            else
+            {
+                Debug.LogWarning("subtitleText가 null입니다!");
             }
         }
 
@@ -431,7 +477,7 @@ namespace FireEvacuation
 
             float duration = 1.5f;
             float timer = 0f;
-            float start = vignette.intensity.value; // 'Vestronly float'를 'float'로 수정
+            float start = vignette.intensity.value;
             float target = 0.45f;
 
             vignette.active = true;
@@ -449,13 +495,13 @@ namespace FireEvacuation
 
         IEnumerator FrontDoorSequence()
         {
-            ShowSubtitle("문 손잡이의 온도를 먼저 확인해야 합니다!");
+            ShowSubtitle("대피 시 문을 열기 전 손잡이의 온도를 먼저 확인해야 합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("문 손잡이가 뜨겁다면 반대편에 불이 있을 수 있습니다!");
+            ShowSubtitle("문 손잡이가 뜨거우면 반대편에 불이 있을 수 있으니, 다른 경로로 대피해야 합니다.");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("지금은 안전합니다! 문 손잡이를 잡고 문을 열어보세요!");
+            ShowSubtitle("이번 훈련은 안전한 상황을 전제로 진행됩니다. 문을 열고 탈출하세요!");
             yield return new WaitForSeconds(textDelay);
 
             if (doorGrabInteractable != null)
@@ -467,10 +513,10 @@ namespace FireEvacuation
 
         IEnumerator BackDoorSequence()
         {
-            ShowSubtitle("잘했어요! 문을 통과했습니다!");
+            ShowSubtitle("잘했습니다! 방을 나왔습니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이제 건물 밖으로 대피해볼까요.");
+            ShowSubtitle("이제 건물 밖으로 대피해봅시다.");
             yield return new WaitForSeconds(textDelay);
         }
 
@@ -481,7 +527,8 @@ namespace FireEvacuation
             {
                 cubeRenderer.material.color = Color.green;
             }
-            ShowSubtitle("잘했어요! 이제 젖은 헝겊을 입 주변에 대보세요!");
+            ShowSubtitle("잘했습니다! 이제 젖은 천을 호흡기 주변에 대보세요!");
+            Debug.Log("천이 젖음. hasRagWetted: true");
         }
 
         void HighlightWater()
@@ -494,7 +541,7 @@ namespace FireEvacuation
                     waterRenderer.material.color = Color.yellow;
                 }
             }
-            ShowSubtitle("물이 있는 곳을 찾아 헝겊을 적셔보세요!");
+            ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
         }
 
         void SetProtectionState(bool state)
@@ -509,7 +556,7 @@ namespace FireEvacuation
             {
                 if (!hasShownProtectionMessage)
                 {
-                    ShowSubtitle("잘했어요! 호흡 보호가 활성화되었습니다!");
+                    ShowSubtitle("잘했어요! 이제 유독가스로부터 호흡기를 보호할 수 있습니다!");
                     hasShownProtectionMessage = true;
                 }
                 if (!hasProtectionActivated)
@@ -535,7 +582,7 @@ namespace FireEvacuation
         private IEnumerator ShowNextSubtitleAfterDelay()
         {
             yield return new WaitForSeconds(5f);
-            ShowSubtitle("다음은 탈출을 위해 출입문을 찾아보세요!");
+            ShowSubtitle("다음은 탈출을 위해 출입문을 찾아봅시다!");
         }
 
         public void SetWaterSearchTime(float time)

@@ -5,7 +5,27 @@ namespace FireEvacuation
 {
     public class SoundManager : MonoBehaviour
     {
-        public static SoundManager Instance;
+        private static SoundManager _instance;
+        public static SoundManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    // If the instance is null, try to find an existing SoundManager in the scene
+                    _instance = FindObjectOfType<SoundManager>();
+                    if (_instance == null)
+                    {
+                        // If no SoundManager exists, create a new GameObject and add SoundManager to it
+                        GameObject soundManagerObject = new GameObject("SoundManager");
+                        _instance = soundManagerObject.AddComponent<SoundManager>();
+                        DontDestroyOnLoad(soundManagerObject);
+                        Debug.Log("Created a new SoundManager instance.");
+                    }
+                }
+                return _instance;
+            }
+        }
 
         [System.Serializable]
         public class SoundGroup
@@ -28,19 +48,31 @@ namespace FireEvacuation
 
         private void Awake()
         {
-            if (Instance == null)
+            if (_instance == null)
             {
-                Instance = this;
+                _instance = this;
                 DontDestroyOnLoad(gameObject);
                 InitSoundGroups();
-                SetupBGM(); // 🎵 BGM 자동 실행
+                SetupBGM();
+                Debug.Log("SoundManager initialized successfully.");
             }
-            else
+            else if (_instance != this)
             {
+                Debug.Log("Duplicate SoundManager found. Destroying this instance.");
                 Destroy(gameObject);
             }
         }
 
+        private void OnDestroy()
+        {
+            if (_instance == this)
+            {
+                _instance = null; // Clear the instance reference if this GameObject is destroyed
+                Debug.Log("SoundManager instance destroyed.");
+            }
+        }
+
+        // Rest of the SoundManager code remains unchanged...
         private void InitSoundGroups()
         {
             foreach (var group in soundGroups)
