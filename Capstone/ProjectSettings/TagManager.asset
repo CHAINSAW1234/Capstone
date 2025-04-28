@@ -44,6 +44,12 @@ TagManager:
   - name: Default
     uniqueID: 0
     locked: 0
+  - name: Text
+    uniqueID: 2875400651
+    locked: 0
+  - name: Canvas
+    uniqueID: 2284931595
+    locked: 0
   m_RenderingLayers:
   - Default
   - Light Layer 1
