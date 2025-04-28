@@ -43,12 +43,11 @@ namespace FireEvacuation
         private Collider crawlingTriggerCollider;
         private bool isInsideCrawlingTrigger = false;
 
-        [Header("비상문 설정")]
-        public GameObject emergencyDoor;
-        public GameObject doorTrigger;
-        public GameObject exitTrigger;
-        public float pushForce = 10f;
-        public float triggerDistance = 0.3f;
+        private GameObject emergencyDoor;
+        private GameObject doorTrigger;
+        private GameObject exitTrigger;
+        private float pushForce = 10f;
+        private float triggerDistance = 0.3f;
 
         [Header("Player Head Transform")]
         public Transform headTransform;
@@ -562,6 +561,24 @@ namespace FireEvacuation
                 }
             }
 
+            // 🔥 [추가] 연기 발생 사운드 재생
+            if (SoundManager.Instance != null)
+            {
+                try
+                {
+                    // 원하는 사운드 그룹과 클립 번호를 설정 (예시로 1, 0 사용)
+                    SoundManager.Instance.PlayOneShot(1, 0);
+                }
+                catch (System.Exception e)
+                {
+                    Debug.LogError("연기 사운드 재생 중 오류 발생: " + e.Message);
+                }
+            }
+            else
+            {
+                Debug.LogError("SoundManager.Instance is null! 연기 사운드 재생 실패.");
+            }
+
             ShowSubtitle("화재로 인해 주변에 연기가 가득해졌습니다.");
             yield return new WaitForSeconds(textDelay);
 
@@ -571,6 +588,7 @@ namespace FireEvacuation
             ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 이동해야합니다.");
             yield return new WaitForSeconds(textDelay);
         }
+
 
         IEnumerator EmergencyDoorSequence()
         {
