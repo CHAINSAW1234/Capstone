@@ -16,25 +16,21 @@ public class NozzleController : MonoBehaviour
 
     private bool isGrabbed = false;
     private bool isRestoring = false;
-    private XRGrabInteractable grabInteractable;
-    private IXRSelectInteractor currentInteractor;
 
     const float restoreSpeed = 5f;
     void Start()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        var grabInteractable = GetComponent<XRGrabInteractable>();
         grabInteractable.selectEntered.AddListener(args =>
         {
             isGrabbed = true;
             isRestoring = false;
-            currentInteractor = args.interactorObject;
 
         });
         grabInteractable.selectExited.AddListener(args =>
         {
             isGrabbed = false;
             isRestoring = true;
-            currentInteractor = null;
         });
 
         OriginPosition = FireExtinguisher.InverseTransformPoint(NozzleBone.position);
