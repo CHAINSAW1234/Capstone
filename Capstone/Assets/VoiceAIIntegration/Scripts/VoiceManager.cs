@@ -141,7 +141,7 @@ public class VoiceManager : MonoBehaviour
 4. 소화기 사용
 - 절차 및 불 끄기
 
-이 시나리오에 기반해 답변을 해주세요. 그리고 모든 답변은 40자 이내로 진행해줘.
+이 시나리오에 기반해 답변을 해주세요. 그리고 모든 답변은 50자 이내로 진행해줘.
 자기 소개 및 기능 소개는 할 필요 없어. 바로 사용자의 질문에 답만 해줘";
 
         string finalPrompt = $"{preContext}\n\n질문: {recognizedText}";

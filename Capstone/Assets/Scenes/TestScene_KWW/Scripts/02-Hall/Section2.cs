@@ -44,8 +44,8 @@ namespace FireEvacuation
         private bool isInsideCrawlingTrigger = false;
 
         private GameObject emergencyDoor;
-        private GameObject doorTrigger;
-        private GameObject exitTrigger;
+        public GameObject doorTrigger;
+        public GameObject exitTrigger;
         private float pushForce = 10f;
         private float triggerDistance = 0.3f;
 

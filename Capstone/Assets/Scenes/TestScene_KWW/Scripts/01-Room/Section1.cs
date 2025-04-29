@@ -327,27 +327,12 @@ namespace FireEvacuation
                         isSearchingForWater = false;
                         isWetting = true;
                         wetTimer = 0f;
-                        ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
-                        ShowSubtitle("잘했습니다! 이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
+                        StartCoroutine(WetRagSequence());
                     }
                 }
-                else if (isWetting)
-                {
-                    isWetting = false;
-                    ShowSubtitle("천을 충분히 물에 적셔야 합니다!");
-                    Debug.Log("천이 물에서 나옴. isWetting: false");
-                }
+              
             }
 
-            if (isWetting)
-            {
-                wetTimer += Time.deltaTime;
-                if (wetTimer >= wetTimeRequired && !hasRagWetted)
-                {
-                    WetRag();
-                    isWetting = false;
-                }
-            }
 
             if (headTransform != null && ragObject != null)
             {
@@ -357,13 +342,13 @@ namespace FireEvacuation
                     if (!hasRagGrabbed)
                     {
                         ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(1);
+                        SequenceManager.Instance.RecordSequenceError(2);
                         return;
                     }
                     if (!hasRagWetted)
                     {
                         ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(1);
+                        SequenceManager.Instance.RecordSequenceError(2);
                         return;
                     }
                     SetProtectionState(true);
@@ -520,15 +505,17 @@ namespace FireEvacuation
             yield return new WaitForSeconds(textDelay);
         }
 
-        void WetRag()
+        IEnumerator WetRagSequence()
         {
             hasRagWetted = true;
             if (cubeRenderer != null)
             {
                 cubeRenderer.material.color = Color.green;
             }
-            ShowSubtitle("잘했습니다! 이제 젖은 천을 호흡기 주변에 대보세요!");
             Debug.Log("천이 젖음. hasRagWetted: true");
+            ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
+            yield return new WaitForSeconds(textDelay);
+            ShowSubtitle("이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
         }
 
         void HighlightWater()
