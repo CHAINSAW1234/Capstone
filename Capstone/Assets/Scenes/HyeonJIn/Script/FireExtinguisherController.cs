@@ -1,39 +1,83 @@
 using UnityEngine;
 using UnityEngine.XR.Interaction.Toolkit.Interactables;
 using UnityEngine.XR.Interaction.Toolkit.Interactors;
+using UnityEngine.InputSystem.XR;
+using UnityEngine.XR;
+using UnityEngine.InputSystem;
 
 public class FireExtinguisherController : MonoBehaviour
 {
+    [SerializeField]
+    private InputActionReference rightTrigger;
+    [SerializeField]
+    private InputActionReference leftTrigger;
+    [SerializeField]
+    private ParticleSystem sprayParticle;
+    private InputAction targetAction;
+
     private XRGrabInteractable grabInteractable;
-    private IXRSelectInteractor currentInteractor;
     private bool isGrabbed = false;
+
+    private bool isPinOff = false;
+
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        var grabInteractable = GetComponent<XRGrabInteractable>();
         NullCheck.Invoke(grabInteractable);
+
         grabInteractable.selectEntered.AddListener(args =>
         {
             isGrabbed = true;
-            currentInteractor = args.interactorObject;
+            if (args.interactorObject.transform.name.Contains("Left"))
+            {
+                targetAction = leftTrigger.action;
+            }
+            else
+            {
+                targetAction = rightTrigger.action;
+            }
         });
+
         grabInteractable.selectExited.AddListener(args =>
         {
             isGrabbed = false;
-            currentInteractor = null;
+            targetAction = null;
         });
     }
 
     // Update is called once per frame
     void Update()
     {
-        if(isGrabbed)
+        if(isGrabbed && isPinOff && NullCheck.Invoke(targetAction))
         {
-            if(NullCheck.Invoke(currentInteractor))
+            float value = targetAction.ReadValue<float>();
+            if(value > 0.1)
             {
-                transform.forward = currentInteractor.transform.forward;
+                StartSpray();
+            }
+            else
+            {
+                StopSpray();
             }
 
         }
     }
+
+    public void PinOff()
+    {
+        isPinOff = true;
+    }
+
+    void StartSpray()
+    {
+        if (!sprayParticle.isPlaying)
+            sprayParticle.Play();
+    }
+    void StopSpray()
+    {
+        if (sprayParticle.isPlaying)
+            sprayParticle.Stop();
+    }
+
 }

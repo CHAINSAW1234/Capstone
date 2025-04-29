@@ -10,31 +10,34 @@ public class NozzleController : MonoBehaviour
     [SerializeField]
     private Transform NozzleBone;
     [SerializeField]
-    private Transform NozzleBoneEnd;
+    private Transform FireExtinguisher;
+    private Vector3 OriginPosition;
+    private Quaternion OriginRotation;
 
     private bool isGrabbed = false;
-    private XRGrabInteractable grabInteractable;
-    private IXRSelectInteractor currentInteractor;
+    private bool isRestoring = false;
 
+    const float restoreSpeed = 5f;
     void Start()
     {
-        grabInteractable = GetComponent<XRGrabInteractable>();
+        var grabInteractable = GetComponent<XRGrabInteractable>();
         grabInteractable.selectEntered.AddListener(args =>
         {
             isGrabbed = true;
-            currentInteractor = args.interactorObject;
+            isRestoring = false;
+
         });
         grabInteractable.selectExited.AddListener(args =>
         {
             isGrabbed = false;
-            currentInteractor = null;
+            isRestoring = true;
         });
 
-        if (NullCheck.Invoke(NozzleBone) && NullCheck.Invoke(NozzleBoneEnd))
+        OriginPosition = FireExtinguisher.InverseTransformPoint(NozzleBone.position);
+        OriginRotation = Quaternion.Inverse(FireExtinguisher.rotation) * NozzleBone.rotation;
+        if (NullCheck.Invoke(NozzleBone))
         {
-            Pose pose = NozzleBone.transform.GetWorldPose();
-            pose.position = (pose.position + NozzleBoneEnd.transform.position) / 2;
-            transform.SetWorldPose(pose);
+            transform.SetWorldPose(NozzleBone.transform.GetWorldPose());
         }
 
     }
@@ -42,23 +45,24 @@ public class NozzleController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-
-        //if (isGrabbed)
-        //{
-        //    OnNozzleGrabbed();
-        //}
-        //Pose pose = NozzleBone.transform.GetWorldPose();
-        //pose.position = (pose.position + NozzleBoneEnd.transform.position) / 2;
-        //transform.SetWorldPose(pose);
-    }
-
-    private void OnNozzleGrabbed()
-    {
-        if (NullCheck.Invoke(currentInteractor))
+        if (!isGrabbed)
         {
-            NozzleBone.position = currentInteractor.transform.position;
-            NozzleBone.forward = currentInteractor.transform.forward;
-        }
+            if(isRestoring)
+            {
+                transform.position = Vector3.Lerp(transform.position, FireExtinguisher.TransformPoint(OriginPosition), Time.deltaTime * restoreSpeed);
 
+                if (Vector3.Distance(transform.position, FireExtinguisher.TransformPoint(OriginPosition)) < 0.001f)
+                {
+                    isRestoring = false;
+
+                }
+            }
+            else
+            {
+                transform.position = FireExtinguisher.TransformPoint(OriginPosition);
+                transform.rotation = FireExtinguisher.rotation * OriginRotation;
+            }
+        }
     }
+
 }
