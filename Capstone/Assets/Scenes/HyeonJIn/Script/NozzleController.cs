@@ -50,8 +50,8 @@ public class NozzleController : MonoBehaviour
             if(isRestoring)
             {
                 transform.position = Vector3.Lerp(transform.position, FireExtinguisher.TransformPoint(OriginPosition), Time.deltaTime * restoreSpeed);
-
-                if (Vector3.Distance(transform.position, FireExtinguisher.TransformPoint(OriginPosition)) < 0.001f)
+                transform.rotation = Quaternion.Lerp(transform.rotation, FireExtinguisher.rotation * OriginRotation, Time.deltaTime * restoreSpeed);
+                if (Vector3.Distance(transform.position, FireExtinguisher.TransformPoint(OriginPosition)) < 0.01f)
                 {
                     isRestoring = false;
 

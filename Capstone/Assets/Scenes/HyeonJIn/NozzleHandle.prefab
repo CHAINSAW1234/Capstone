@@ -204,8 +204,8 @@ BoxCollider:
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
-  m_Size: {x: 0.03, y: 0.07, z: 0.03}
-  m_Center: {x: 0, y: 0, z: 0}
+  m_Size: {x: 0.03000013, y: 0.09, z: 0.03}
+  m_Center: {x: 0, y: 0.048, z: 0}
 --- !u!114 &4595216570179825757
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -219,4 +219,4 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   NozzleBone: {fileID: 0}
-  NozzleBoneEnd: {fileID: 0}
+  FireExtinguisher: {fileID: 0}

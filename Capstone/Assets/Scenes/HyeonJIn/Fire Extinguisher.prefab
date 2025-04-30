@@ -28,7 +28,7 @@ Transform:
   m_GameObject: {fileID: 103382}
   serializedVersion: 2
   m_LocalRotation: {x: -0.65371925, y: -0.049395245, z: 0.7539642, w: 0.041823648}
-  m_LocalPosition: {x: 0.0009460449, y: 0.023847759, z: 0.13177681}
+  m_LocalPosition: {x: 0.0010643005, y: -0.045561314, z: 0.122701645}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -4713,10 +4713,10 @@ ParentConstraint:
   m_Enabled: 1
   serializedVersion: 2
   m_Weight: 1
-  m_TranslationAtRest: {x: 0.0009460449, y: 0.023847759, z: 0.13177681}
+  m_TranslationAtRest: {x: 0.0010643005, y: -0.045561314, z: 0.122701645}
   m_RotationAtRest: {x: 1.1346815, y: -81.92611, z: 172.66484}
   m_TranslationOffsets:
-  - {x: 0, y: 0, z: 0}
+  - {x: 0.000030517578, y: 0.06999993, z: -0.000015258789}
   m_RotationOffsets:
   - {x: 0, y: 0, z: 0}
   m_AffectTranslationX: 1
@@ -4726,7 +4726,7 @@ ParentConstraint:
   m_AffectRotationY: 1
   m_AffectRotationZ: 1
   m_Active: 1
-  m_IsLocked: 1
+  m_IsLocked: 0
   m_Sources:
   - sourceTransform: {fileID: 7123133513689045343}
     weight: 1
@@ -4846,8 +4846,8 @@ ParticleSystem:
     startLifetime:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 5
-      minScalar: 4
+      scalar: 6
+      minScalar: 5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -4881,8 +4881,8 @@ ParticleSystem:
     startSpeed:
       serializedVersion: 2
       minMaxState: 3
-      scalar: 2
-      minScalar: 2
+      scalar: 5
+      minScalar: 5
       maxCurve:
         serializedVersion: 2
         m_Curve:
@@ -5528,7 +5528,7 @@ ParticleSystem:
     rateOverTime:
       serializedVersion: 2
       minMaxState: 0
-      scalar: 32
+      scalar: 100
       minScalar: 10
       maxCurve:
         serializedVersion: 2
@@ -5644,8 +5644,8 @@ ParticleSystem:
         serializedVersion: 2
         m_Curve:
         - serializedVersion: 3
-          time: 0.0098724365
-          value: 0.15315247
+          time: 0
+          value: 0.099098206
           inSlope: 0
           outSlope: 0
           tangentMode: 0
@@ -5653,14 +5653,14 @@ ParticleSystem:
           inWeight: 0.33333334
           outWeight: 0.33333334
         - serializedVersion: 3
-          time: 0.4610714
-          value: 0.38288262
-          inSlope: 1.3373415
-          outSlope: 1.3373415
+          time: 0.39185292
+          value: 0.30179787
+          inSlope: 1.592862
+          outSlope: 1.592862
           tangentMode: 0
           weightedMode: 0
           inWeight: 0.14406124
-          outWeight: 0.21219249
+          outWeight: 0.22320755
         - serializedVersion: 3
           time: 1
           value: 0
@@ -9695,6 +9695,21 @@ MonoBehaviour:
   leftLimit: -0.01
   rightLimit: 0.1
   detachDistance: 0.1
+  PinOffEvent:
+    m_PersistentCalls:
+      m_Calls:
+      - m_Target: {fileID: 6065164144030476958}
+        m_TargetAssemblyTypeName: FireExtinguisherController, Assembly-CSharp
+        m_MethodName: PinOff
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
 --- !u!1 &1126764106559404596
 GameObject:
   m_ObjectHideFlags: 0
@@ -9828,6 +9843,59 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_Weight: 1
   m_Effectors: []
+--- !u!1 &1520282291335120320
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7176070870000577239}
+  - component: {fileID: 5559980619761757770}
+  m_Layer: 0
+  m_Name: GrabCollider
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7176070870000577239
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1520282291335120320}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2157175702850300482}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!65 &5559980619761757770
+BoxCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1520282291335120320}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 3
+  m_Size: {x: 0.03638266, y: 0.11861026, z: 0.20881273}
+  m_Center: {x: -0.00041256007, y: 0.6805915, z: -0.056627274}
 --- !u!1 &1556233188317913985
 GameObject:
   m_ObjectHideFlags: 0
@@ -9871,10 +9939,10 @@ GameObject:
   - component: {fileID: 2157175702850300482}
   - component: {fileID: 2892320274628079273}
   - component: {fileID: 7501342085972819777}
-  - component: {fileID: 1270114294970078723}
   - component: {fileID: 8611916121165248339}
   - component: {fileID: 495763479294801616}
   - component: {fileID: 6065164144030476958}
+  - component: {fileID: 7594148583005071005}
   m_Layer: 0
   m_Name: Fire Extinguisher
   m_TagString: Untagged
@@ -9901,6 +9969,7 @@ Transform:
   - {fileID: 5597647602240713396}
   - {fileID: 2881785408084007712}
   - {fileID: 406954}
+  - {fileID: 7176070870000577239}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!54 &2892320274628079273
@@ -9925,8 +9994,8 @@ Rigidbody:
     m_Bits: 0
   m_ImplicitCom: 1
   m_ImplicitTensor: 1
-  m_UseGravity: 0
-  m_IsKinematic: 1
+  m_UseGravity: 1
+  m_IsKinematic: 0
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 0
@@ -9944,7 +10013,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   m_InteractionManager: {fileID: 0}
   m_Colliders:
-  - {fileID: 1270114294970078723}
+  - {fileID: 5559980619761757770}
   m_InteractionLayers:
     m_Bits: 1
   m_DistanceCalculationMode: 1
@@ -10053,27 +10122,6 @@ MonoBehaviour:
   m_StartingMultipleGrabTransformers: []
   m_AddDefaultGrabTransformers: 1
   m_FarAttachMode: 0
---- !u!65 &1270114294970078723
-BoxCollider:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1631432760772964600}
-  m_Material: {fileID: 0}
-  m_IncludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_ExcludeLayers:
-    serializedVersion: 2
-    m_Bits: 0
-  m_LayerOverridePriority: 0
-  m_IsTrigger: 0
-  m_ProvidesContacts: 0
-  m_Enabled: 1
-  serializedVersion: 3
-  m_Size: {x: 0.20107459, y: 0.10978657, z: 0.04228412}
-  m_Center: {x: -0.04844571, y: 0.6812197, z: 0.0037509769}
 --- !u!95 &8611916121165248339
 Animator:
   serializedVersion: 7
@@ -10127,6 +10175,28 @@ MonoBehaviour:
   rightTrigger: {fileID: 875253871413052681, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   leftTrigger: {fileID: -5982496924579745919, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   sprayParticle: {fileID: 198603313496135824}
+--- !u!64 &7594148583005071005
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1631432760772964600}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 0
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 0}
 --- !u!1 &1641400527357443782
 GameObject:
   m_ObjectHideFlags: 0
@@ -10553,6 +10623,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1549541839226928236}
   - component: {fileID: 7737119154619380092}
+  - component: {fileID: 2897185148395197927}
   m_Layer: 0
   m_Name: Fire_Extinguisher
   m_TagString: Untagged
@@ -10653,6 +10724,28 @@ SkinnedMeshRenderer:
     m_Center: {x: 0.0002457276, y: 0.15546653, z: 0.018892668}
     m_Extent: {x: 0.043521326, y: 0.15681931, z: 0.085375294}
   m_DirtyAABB: 0
+--- !u!64 &2897185148395197927
+MeshCollider:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5988170024177635463}
+  m_Material: {fileID: 0}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_LayerOverridePriority: 0
+  m_IsTrigger: 0
+  m_ProvidesContacts: 0
+  m_Enabled: 1
+  serializedVersion: 5
+  m_Convex: 1
+  m_CookingOptions: 30
+  m_Mesh: {fileID: 4799630050454585619, guid: 51364b550817bbc478a53e51c6197c43, type: 3}
 --- !u!1 &6073141241515823000
 GameObject:
   m_ObjectHideFlags: 0
@@ -10710,7 +10803,7 @@ Transform:
   m_GameObject: {fileID: 6235309372333071190}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.09, y: 0.705, z: -0}
+  m_LocalPosition: {x: 0, y: 0.692, z: -0.0521}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
