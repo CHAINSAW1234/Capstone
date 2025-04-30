@@ -1,0 +1,2 @@
+C:\Users\qudtn\Downloads\Capstone-main-test\Capstone-main\Capstone\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\CMakeLists.txt
+C:\Users\qudtn\Downloads\Capstone-main-test\Capstone-main\Capstone\Library\Bee\Android\Prj\IL2CPP\Gradle\unityLibrary\src\main\cpp\GameActivity\CMakeLists.txt

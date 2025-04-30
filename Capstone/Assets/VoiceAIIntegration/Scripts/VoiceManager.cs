@@ -20,6 +20,9 @@ public class VoiceManager : MonoBehaviour
     private bool previousButtonState = false; // 이전 버튼 상태 저장
     private AudioSource playbackSource;
 
+    public ObjectLocator objectLocator; // Inspector에서 할당
+
+
     private void Start()
     {
         geminiManager = GetComponent<GeminiManager>();
@@ -116,11 +119,26 @@ public class VoiceManager : MonoBehaviour
             return;
         }
 
-        // 🔵 1. 유저가 질문한 원본 텍스트는 그대로 표시
+        // 🔵 사용자 질문 텍스트 표시
         statusText.text = $"🎤 인식된 텍스트: {recognizedText}";
         Debug.Log($"[VoiceManager] 인식된 텍스트: {recognizedText}");
 
-        // 🔵 2. Gemini에 보낼 때는 제약사항 추가
+        // ✅ 오브젝트 강조: 사용자 질문 기준으로 수행
+        objectLocator?.CheckAndHighlight(recognizedText);
+
+        if (objectLocator.IsLocationQuestion(recognizedText, out string matchedKeyword))
+        {
+            string direction = objectLocator.GetRelativeDirectionTo(matchedKeyword);
+            string fixedAnswer = $"{matchedKeyword}은 당신 기준 {direction} 방향에 있습니다!";
+
+            answerText.text = $"🧠 AI 답변:\n<color=#007BFF>{fixedAnswer}</color>";
+            Debug.Log($"[VoiceManager] 위치 기반 답변 생성: {fixedAnswer}");
+
+            StartCoroutine(ttsManager.Speak(fixedAnswer));
+            return;
+        }
+
+        // 🔵 Gemini 질문 생성
         string preContext = @"당신은 가상현실 화재 대피 교육 훈련 시스템에 AI 어시스턴트입니다.
 현재 진행 중인 시나리오 순서는 다음과 같습니다:
 
@@ -149,6 +167,7 @@ public class VoiceManager : MonoBehaviour
         StartCoroutine(geminiManager.SendPrompt(finalPrompt, OnAnswerReceived));
     }
 
+
     private void OnAnswerReceived(string answer)
     {
         if (string.IsNullOrEmpty(answer))
@@ -158,9 +177,11 @@ public class VoiceManager : MonoBehaviour
             return;
         }
 
-        answerText.text = $"🧠 AI 답변:\n{answer}";
+        answerText.text = $"🧠 AI 답변:\n<color=#007BFF>{answer}</color>";
         Debug.Log($"[VoiceManager] AI 답변 수신 완료: {answer}");
 
+        // ❌ 더 이상 강조 트리거는 여기서 하지 않음
         StartCoroutine(ttsManager.Speak(answer));
     }
+
 }

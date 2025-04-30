@@ -328,19 +328,19 @@ namespace FireEvacuation
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
                         ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
                         ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(5))
                     {
                         ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
                 }
@@ -366,7 +366,7 @@ namespace FireEvacuation
             if (!SequenceManager.Instance.IsStepCompleted(3))
             {
                 ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                SequenceManager.Instance.RecordSequenceError(4);
+                SequenceManager.Instance.RecordSequenceError(3);
                 return;
             }
             isButtonPressed = true;
@@ -405,7 +405,7 @@ namespace FireEvacuation
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
                         ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(4);
+                        SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     onFireAlarmActivated?.Invoke();
@@ -456,13 +456,13 @@ namespace FireEvacuation
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
                         ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(5);
+                        SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
                         ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(5);
+                        SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
                     hasEnteredSmokeArea = true;
@@ -496,19 +496,19 @@ namespace FireEvacuation
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
                         ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
                         ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(5))
                     {
                         ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(6);
+                        SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
                     hasReachedEmergencyDoor = true;

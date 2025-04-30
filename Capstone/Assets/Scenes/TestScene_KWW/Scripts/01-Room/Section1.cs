@@ -288,7 +288,7 @@ namespace FireEvacuation
             if (!hasFireRecognized)
             {
                 ShowSubtitle("먼저 경보를 듣고 상황을 파악하세요!");
-                SequenceManager.Instance.RecordSequenceError(1); // 호흡 보호 순서 오류
+                SequenceManager.Instance.RecordSequenceError(0); // 호흡 보호 순서 오류
                 return;
             }
 
@@ -298,7 +298,6 @@ namespace FireEvacuation
                 ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
                 isSearchingForWater = true;
                 searchTimer = waterSearchTime;
-                SequenceManager.Instance.CompleteStep(1); // 호흡 보호 완료
                 Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
             }
         }
@@ -342,15 +341,16 @@ namespace FireEvacuation
                     if (!hasRagGrabbed)
                     {
                         ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(2);
+                        SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(2);
+                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!-err");
+                        SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
+                    SequenceManager.Instance.CompleteStep(1); // 호흡 보호 완료
                     SetProtectionState(true);
                 }
                 else if (isProtecting && distanceToHead > protectionDistance)
@@ -374,19 +374,19 @@ namespace FireEvacuation
                     if (!hasRagGrabbed)
                     {
                         ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(2); // 문 탈출 순서 오류
+                        SequenceManager.Instance.RecordSequenceError(1); // 문 탈출 순서 오류
                         return;
                     }
                     if (!hasRagWetted)
                     {
                         ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(2);
+                        SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasProtectionActivated)
                     {
                         ShowSubtitle("먼저 호흡 보호를 위해 젖은 천을 입에 대세요!");
-                        SequenceManager.Instance.RecordSequenceError(2);
+                        SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     hasReachedFrontDoor = true;

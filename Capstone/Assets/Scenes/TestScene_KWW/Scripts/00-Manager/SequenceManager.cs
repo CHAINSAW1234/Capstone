@@ -27,14 +27,8 @@ namespace FireEvacuation
         // 특정 단계에서 순서 오류를 기록
         public void RecordSequenceError(int stepIndex)
         {
-            if (stepIndex < 0 || stepIndex >= sequenceErrors.Length) return;
-
-            // 현재 단계보다 높은 단계가 시도된 경우 오류로 기록
-            if (stepIndex > currentStep)
-            {
                 sequenceErrors[stepIndex] = true;
                 Debug.Log($"Sequence Error: Step {stepIndex} attempted before completing step {currentStep}");
-            }
         }
 
         // 단계 완료 기록
