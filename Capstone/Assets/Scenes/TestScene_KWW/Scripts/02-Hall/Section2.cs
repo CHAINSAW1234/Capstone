@@ -98,7 +98,7 @@ namespace FireEvacuation
                 headTransform = Camera.main?.transform;
                 if (headTransform == null)
                 {
-                    Debug.LogError("Head Transform (Main Camera)을 찾을 수 없습니다!");
+                    //Debug.LogError("Head Transform (Main Camera)을 찾을 수 없습니다!");
                 }
             }
         }
@@ -107,7 +107,7 @@ namespace FireEvacuation
         {
             if (startTrigger == null)
             {
-                Debug.LogError("시작 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("시작 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -123,7 +123,7 @@ namespace FireEvacuation
         {
             if (fireAlarmButton == null)
             {
-                Debug.LogError("화재 경보 버튼 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("화재 경보 버튼 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -162,7 +162,7 @@ namespace FireEvacuation
             buttonInteractable.hoverEntered.AddListener(OnButtonHoverEnter);
             buttonInteractable.hoverExited.AddListener(OnButtonHoverExit);
 
-            Debug.Log("✅ 화재 경보 버튼 설정 완료.");
+            //Debug.Log("✅ 화재 경보 버튼 설정 완료.");
         }
 
         void InitPostProcessing()
@@ -174,7 +174,7 @@ namespace FireEvacuation
             }
             else
             {
-                Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
+                //Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
             }
         }
 
@@ -191,7 +191,7 @@ namespace FireEvacuation
         {
             if (smokeTrigger == null)
             {
-                Debug.LogError("연기 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("연기 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -204,7 +204,7 @@ namespace FireEvacuation
 
             if (crawlingTrigger == null)
             {
-                Debug.LogError("포복 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("포복 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -217,7 +217,7 @@ namespace FireEvacuation
 
             if (smokeArrivalTrigger == null)
             {
-                Debug.LogError("연기 도착 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("연기 도착 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -244,7 +244,7 @@ namespace FireEvacuation
         {
             if (emergencyDoor == null)
             {
-                Debug.LogError("비상문 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("비상문 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -287,7 +287,7 @@ namespace FireEvacuation
 
             if (doorTrigger == null)
             {
-                Debug.LogError("비상문 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("비상문 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -300,7 +300,7 @@ namespace FireEvacuation
 
             if (exitTrigger == null)
             {
-                Debug.LogError("비상문 반대편 트리거 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("비상문 반대편 트리거 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -311,7 +311,7 @@ namespace FireEvacuation
             }
             exitTriggerCollider.isTrigger = true;
 
-            Debug.Log("✅ 비상문 설정 완료.");
+            //Debug.Log("✅ 비상문 설정 완료.");
         }
 
         private void OnTriggerEnter(Collider other)
@@ -357,7 +357,7 @@ namespace FireEvacuation
                 Vector3 pushDirection = -emergencyDoor.transform.right;
                 doorRb.AddForceAtPosition(pushForce * pushDirection, emergencyDoor.transform.position, ForceMode.Impulse);
                 onEmergencyDoorOpened?.Invoke();
-                Debug.Log("✅ 문이 손으로 밀려 열림.");
+                //Debug.Log("✅ 문이 손으로 밀려 열림.");
             }
         }
 
@@ -365,7 +365,7 @@ namespace FireEvacuation
         {
             if (!SequenceManager.Instance.IsStepCompleted(3))
             {
-                ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                //ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                 SequenceManager.Instance.RecordSequenceError(3);
                 return;
             }
@@ -418,7 +418,7 @@ namespace FireEvacuation
                     {
                         if (SoundManager.Instance == null)
                         {
-                            Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
+                           // Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
                             return;
                         }
                         try
@@ -427,7 +427,7 @@ namespace FireEvacuation
                         }
                         catch (System.Exception e)
                         {
-                            Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
+                           // Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
                         }
                     }
                 }
@@ -571,12 +571,12 @@ namespace FireEvacuation
                 }
                 catch (System.Exception e)
                 {
-                    Debug.LogError("연기 사운드 재생 중 오류 발생: " + e.Message);
+                    //Debug.LogError("연기 사운드 재생 중 오류 발생: " + e.Message);
                 }
             }
             else
             {
-                Debug.LogError("SoundManager.Instance is null! 연기 사운드 재생 실패.");
+                //Debug.LogError("SoundManager.Instance is null! 연기 사운드 재생 실패.");
             }
 
             ShowSubtitle("화재로 인해 주변에 연기가 가득해졌습니다.");

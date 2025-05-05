@@ -28,7 +28,6 @@ namespace FireEvacuation
         public void RecordSequenceError(int stepIndex)
         {
                 sequenceErrors[stepIndex] = true;
-                Debug.Log($"Sequence Error: Step {stepIndex} attempted before completing step {currentStep}");
         }
 
         // 단계 완료 기록

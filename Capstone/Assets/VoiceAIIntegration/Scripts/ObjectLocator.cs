@@ -34,7 +34,7 @@ public class ObjectLocator : MonoBehaviour
                 {
                     if (userInput.Contains(hint))
                     {
-                        Debug.Log($"[ObjectLocator] '{keyword}' + 위치 관련 단어 '{hint}' 발견 → 강조 실행");
+                       // Debug.Log($"[ObjectLocator] '{keyword}' + 위치 관련 단어 '{hint}' 발견 → 강조 실행");
                         mapping.target?.Highlight(3f);
                         return;
                     }

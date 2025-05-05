@@ -67,7 +67,7 @@ namespace FireEvacuation
             triggerCollider.center = new Vector3(0, 0, 0.2f); // 문 표면 근처로 이동
             triggerCollider.isTrigger = true;
 
-            Debug.Log("✅ 문 설정 완료.");
+            //Debug.Log("✅ 문 설정 완료.");
         }
 
         private void OnTriggerEnter(Collider other)

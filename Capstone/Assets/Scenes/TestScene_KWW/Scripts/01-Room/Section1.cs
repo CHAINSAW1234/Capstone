@@ -82,14 +82,13 @@ namespace FireEvacuation
         {
             if (ragObject == null)
             {
-                Debug.LogError("Rag 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
             grabInteractable = ragObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
             if (grabInteractable == null)
             {
-                Debug.LogError("Rag 오브젝트에 XRGrabInteractable 컴포넌트가 없습니다!");
+                //Debug.LogError("Rag 오브젝트에 XRGrabInteractable 컴포넌트가 없습니다!");
             }
             else
             {
@@ -99,7 +98,7 @@ namespace FireEvacuation
             cubeRenderer = ragObject.GetComponent<Renderer>();
             if (cubeRenderer == null)
             {
-                Debug.LogError("Rag 오브젝트에 Renderer 컴포넌트가 없습니다!");
+                //Debug.LogError("Rag 오브젝트에 Renderer 컴포넌트가 없습니다!");
             }
             else
             {
@@ -112,7 +111,7 @@ namespace FireEvacuation
             if (ragCollider == null)
             {
                 ragCollider = ragObject.AddComponent<BoxCollider>();
-                Debug.LogWarning("Rag 오브젝트에 콜라이더가 없어 추가했습니다.");
+                //Debug.LogWarning("Rag 오브젝트에 콜라이더가 없어 추가했습니다.");
             }
 
             Rigidbody ragRb = ragObject.GetComponent<Rigidbody>();
@@ -122,12 +121,12 @@ namespace FireEvacuation
                 ragRb.useGravity = true;
                 ragRb.isKinematic = false;
                 ragRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
+                //Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
             }
 
             if (waterObject == null)
             {
-                Debug.LogError("Water 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("Water 오브젝트가 지정되지 않았습니다!");
                 return;
             }
             else
@@ -137,17 +136,17 @@ namespace FireEvacuation
                 {
                     waterCollider = waterObject.AddComponent<BoxCollider>();
                     waterCollider.isTrigger = true;
-                    Debug.LogWarning("Water 오브젝트에 콜라이더가 없어 추가했습니다.");
+                    //Debug.LogWarning("Water 오브젝트에 콜라이더가 없어 추가했습니다.");
                 }
                 else if (!waterCollider.isTrigger)
                 {
                     waterCollider.isTrigger = true;
-                    Debug.LogWarning("Water 오브젝트의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
+                    //Debug.LogWarning("Water 오브젝트의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
                 }
 
                 if (!waterObject.CompareTag("Water"))
                 {
-                    Debug.LogWarning("Water 오브젝트에 'Water' 태그가 없습니다. 태그를 추가합니다.");
+                    //Debug.LogWarning("Water 오브젝트에 'Water' 태그가 없습니다. 태그를 추가합니다.");
                     waterObject.tag = "Water";
                 }
             }
@@ -157,7 +156,7 @@ namespace FireEvacuation
                 headTransform = GameObject.Find("Main Camera")?.transform;
                 if (headTransform == null)
                 {
-                    Debug.LogError("Main Camera를 찾을 수 없습니다! Inspector에서 Head Transform을 수동으로 지정해주세요.");
+                    //Debug.LogError("Main Camera를 찾을 수 없습니다! Inspector에서 Head Transform을 수동으로 지정해주세요.");
                 }
             }
         }
@@ -171,7 +170,7 @@ namespace FireEvacuation
             }
             else
             {
-                Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
+                //Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
             }
         }
 
@@ -179,7 +178,7 @@ namespace FireEvacuation
         {
             if (doorObject == null)
             {
-                Debug.LogError("문 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("문 오브젝트가 지정되지 않았습니다!");
                 return;
             }
 
@@ -224,7 +223,7 @@ namespace FireEvacuation
             doorGrabInteractable.throwOnDetach = true;
             doorGrabInteractable.enabled = false;
 
-            Debug.Log("✅ 문 설정 완료.");
+            //Debug.Log("✅ 문 설정 완료.");
         }
 
         IEnumerator DrillSequence()
@@ -243,25 +242,25 @@ namespace FireEvacuation
             int retries = 0;
             while (SoundManager.Instance == null && retries < maxRetries)
             {
-                Debug.LogWarning("SoundManager.Instance is null. Waiting for initialization...");
+                //Debug.LogWarning("SoundManager.Instance is null. Waiting for initialization...");
                 yield return new WaitForSeconds(0.1f);
                 retries++;
             }
 
             if (SoundManager.Instance == null)
             {
-                Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
+                //Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
                 yield break; // Exit the coroutine if SoundManager is not available
             }
 
             try
             {
                 SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
-                Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
+                //Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
             }
             catch (System.Exception e)
             {
-                Debug.LogError("사이렌 사운드 재생 중 오류 발생: " + e.Message);
+                //Debug.LogError("사이렌 사운드 재생 중 오류 발생: " + e.Message);
             }
 
             yield return EnableVignetteEffect();
@@ -298,7 +297,7 @@ namespace FireEvacuation
                 ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
                 isSearchingForWater = true;
                 searchTimer = waterSearchTime;
-                Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
+                //Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
             }
         }
 
@@ -346,7 +345,7 @@ namespace FireEvacuation
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!-err");
+                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
@@ -418,11 +417,11 @@ namespace FireEvacuation
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
-                Debug.Log($"자막 표시: {message}");
+                //Debug.Log($"자막 표시: {message}");
             }
             else
             {
-                Debug.LogWarning("subtitleText가 null입니다!");
+                //Debug.LogWarning("subtitleText가 null입니다!");
             }
         }
 
@@ -492,7 +491,7 @@ namespace FireEvacuation
             if (doorGrabInteractable != null)
             {
                 doorGrabInteractable.enabled = true;
-                Debug.Log("✅ 문 상호작용 활성화.");
+                //Debug.Log("✅ 문 상호작용 활성화.");
             }
         }
 
@@ -512,7 +511,7 @@ namespace FireEvacuation
             {
                 cubeRenderer.material.color = Color.green;
             }
-            Debug.Log("천이 젖음. hasRagWetted: true");
+            //Debug.Log("천이 젖음. hasRagWetted: true");
             ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
             yield return new WaitForSeconds(textDelay);
             ShowSubtitle("이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");

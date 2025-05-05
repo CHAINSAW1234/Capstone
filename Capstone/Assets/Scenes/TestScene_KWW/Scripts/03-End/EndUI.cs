@@ -1,5 +1,6 @@
 using UnityEngine;
 using TMPro;
+using UnityEngine.UI;
 using FireEvacuation;
 
 namespace FireEvacuation
@@ -10,7 +11,8 @@ namespace FireEvacuation
         [SerializeField] private GameObject previousUI; // 비활성화할 이전 UI
         [SerializeField] private GameObject endUI; // 활성화할 종료 UI
         [SerializeField] private TMP_Text elapsedTimeText; // 경과 시간을 표시할 TMP_Text
-        [SerializeField] private TMP_Text sequenceText; // 시나리오 순서 텍스트
+        [SerializeField] private RawImage[] stepImages; // 단계별 출력 이미지 오브젝트 (총 7개, RawImage)
+        [SerializeField] private Texture2D[] incorrectTextures; // 틀렸을 때 사용할 텍스처들 (총 7개)
 
         [Header("타이머 설정")]
         [SerializeField] private TimeManager timeManager; // TimeManager 참조
@@ -42,9 +44,14 @@ namespace FireEvacuation
                 Debug.LogError("Elapsed Time Text (TMP_Text)가 지정되지 않았습니다!", this);
                 return;
             }
-            if (sequenceText == null)
+            if (stepImages == null || stepImages.Length != 7)
             {
-                Debug.LogError("Sequence Text (TMP_Text)가 지정되지 않았습니다!", this);
+                Debug.LogError("StepImages가 정확히 7개가 아닙니다!", this);
+                return;
+            }
+            if (incorrectTextures == null || incorrectTextures.Length != 7)
+            {
+                Debug.LogError("IncorrectTextures가 정확히 7개가 아닙니다!", this);
                 return;
             }
             if (timeManager == null)
@@ -73,7 +80,6 @@ namespace FireEvacuation
             if (triggerObject == gameObject && !isTriggered && other.CompareTag(triggerTag))
             {
                 isTriggered = true;
-                Debug.Log("Trigger activated by: " + other.name);
                 ActivateEndUI();
             }
         }
@@ -91,7 +97,6 @@ namespace FireEvacuation
                     if (hitCollider.CompareTag(triggerTag))
                     {
                         isTriggered = true;
-                        Debug.Log("Trigger activated by: " + hitCollider.name);
                         ActivateEndUI();
                         break;
                     }
@@ -115,28 +120,13 @@ namespace FireEvacuation
 
         private void DisplaySequenceStatus()
         {
-            string[] steps = {
-                "상황 인지",
-                "호흡 보호",
-                "문 탈출",
-                "대피도 확인",
-                "경보 울리기",
-                "포복",
-                "비상문 사용"
-            };
-
-            string sequenceDisplay = "";
-            for (int i = 0; i < steps.Length; i++)
+            for (int i = 0; i < stepImages.Length; i++)
             {
-                bool hasError = SequenceManager.Instance.HasSequenceError(i);
-                string colorTag = hasError ? "<color=red>" : "<color=blue>";
-                sequenceDisplay += $"{colorTag}{steps[i]}</color>";
-                if (i < steps.Length - 1)
+                if (SequenceManager.Instance.HasSequenceError(i))
                 {
-                    sequenceDisplay += " - ";
+                    stepImages[i].texture = incorrectTextures[i];
                 }
             }
-            sequenceText.text = sequenceDisplay;
         }
     }
 }
