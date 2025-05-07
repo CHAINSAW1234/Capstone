@@ -9,10 +9,12 @@ public class StartSceneCard2 : MonoBehaviour
 
     private TextMeshProUGUI proUGUI;
 
-    private void Start()
+    private void Awake()
     {
-        proUGUI = GetComponentInChildren<TextMeshProUGUI>();
+        NullCheck.Invoke(startSceneUIManager);
+        NullCheck.Invoke(proUGUI = GetComponentInChildren<TextMeshProUGUI>());
     }
+
     void OnEnable()
     {
         StartSceneUIManager.StudyItem item = startSceneUIManager.Item;
@@ -23,7 +25,6 @@ public class StartSceneCard2 : MonoBehaviour
             StudyItem.FireExtinguisher => "  선택하신 학습 항목은 소화기 사용입니다.",
             _ => ""
         };
-
 
         string[] lines = proUGUI.text.Split('\n');
         lines[0] = FirstLine;
