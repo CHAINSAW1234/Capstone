@@ -18,7 +18,7 @@ public static class NullCheck
     [Conditional("UNITY_EDITOR")]
     private static void LogNull<T>()
     {   
-        UnityEngine.Debug.LogWarning($"[NullCheck] {typeof(T).Name} is null.");
+        UnityEngine.Debug.LogError($"[NullCheck] {typeof(T).Name} is null.");
     }
 
 }

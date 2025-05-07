@@ -9,10 +9,12 @@ public class StartSceneCard3 : MonoBehaviour
 
     private TextMeshProUGUI proUGUI;
 
-    private void Start()
+    private void Awake()
     {
-        proUGUI = GetComponentInChildren<TextMeshProUGUI>();
+        NullCheck.Invoke(startSceneUIManager);
+        NullCheck.Invoke(proUGUI = GetComponentInChildren<TextMeshProUGUI>());
     }
+
     void OnEnable()
     {
         StartSceneUIManager.StudyItem item = startSceneUIManager.Item;
@@ -27,8 +29,8 @@ public class StartSceneCard3 : MonoBehaviour
 
         string SecondLine = mode switch
         {
-            Mode.Study => "선택하신 모드는 연습 모드입니다.",
-            Mode.Evaluation => "선택하신 모드는 평가 모드입니다.",
+            Mode.Study => "  선택하신 모드는 연습 모드입니다.",
+            Mode.Evaluation => "  선택하신 모드는 평가 모드입니다.",
             _ => ""
         };
 

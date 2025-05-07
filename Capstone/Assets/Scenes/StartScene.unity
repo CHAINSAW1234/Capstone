@@ -2526,24 +2526,24 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: Next
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1502593352}
-        m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
         m_MethodName: SetStudyItem
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1502593352}
+        m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
+        m_MethodName: Next
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -2839,24 +2839,24 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: Next
-        m_Mode: 1
-        m_Arguments:
-          m_ObjectArgument: {fileID: 0}
-          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
-          m_IntArgument: 0
-          m_FloatArgument: 0
-          m_StringArgument: 
-          m_BoolArgument: 0
-        m_CallState: 2
-      - m_Target: {fileID: 1502593352}
-        m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
         m_MethodName: SetMode
         m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
           m_IntArgument: 1
+          m_FloatArgument: 0
+          m_StringArgument: 
+          m_BoolArgument: 0
+        m_CallState: 2
+      - m_Target: {fileID: 1502593352}
+        m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
+        m_MethodName: Next
+        m_Mode: 1
+        m_Arguments:
+          m_ObjectArgument: {fileID: 0}
+          m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
+          m_IntArgument: 0
           m_FloatArgument: 0
           m_StringArgument: 
           m_BoolArgument: 0
@@ -5401,6 +5401,15 @@ MonoBehaviour:
   - {fileID: 1050106391}
   - {fileID: 1559416302}
   - {fileID: 1623938022}
+  SceneNames:
+  - item: 0
+    mode: 0
+    reference: {fileID: 102900000, guid: 630915c62d9f2f64c8a5f2acf191a5f1, type: 3}
+    str: Scene_Evacuation
+  - item: 1
+    mode: 0
+    reference: {fileID: 102900000, guid: b942d79ec03111846bdacaab75af1f22, type: 3}
+    str: JHJ_TestScene
 --- !u!4 &1502593353
 Transform:
   m_ObjectHideFlags: 0
@@ -6169,8 +6178,8 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: Next
-        m_Mode: 1
+        m_MethodName: SetMode
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -6181,8 +6190,8 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: SetMode
-        m_Mode: 3
+        m_MethodName: Next
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -6482,8 +6491,8 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: Next
-        m_Mode: 1
+        m_MethodName: SetStudyItem
+        m_Mode: 3
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine
@@ -6494,8 +6503,8 @@ MonoBehaviour:
         m_CallState: 2
       - m_Target: {fileID: 1502593352}
         m_TargetAssemblyTypeName: StartSceneUIManager, Assembly-CSharp
-        m_MethodName: SetStudyItem
-        m_Mode: 3
+        m_MethodName: Next
+        m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
           m_ObjectArgumentAssemblyTypeName: UnityEngine.Object, UnityEngine

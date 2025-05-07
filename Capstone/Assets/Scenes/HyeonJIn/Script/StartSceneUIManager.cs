@@ -1,13 +1,22 @@
-using NUnit.Framework;
 using System.Collections.Generic;
-using TMPro;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class StartSceneUIManager : MonoBehaviour
 {
     public enum StudyItem { FireEvacuation = 0, FireExtinguisher = 1, NULL };
     public enum Mode { Study = 0, Evaluation = 1, NULL };
 
+    [System.Serializable]
+    public class NamedString
+    {
+        public StudyItem item = StudyItem.NULL;
+        public Mode mode = Mode.NULL;
+#if UNITY_EDITOR
+        public UnityEditor.SceneAsset reference;
+#endif
+        public string str;
+    }
     [SerializeField]
     private List<GameObject> step;
     int currentStepIndex = 0;
@@ -25,6 +34,9 @@ public class StartSceneUIManager : MonoBehaviour
         get => mode;
     }
 
+    [SerializeField]
+    [Header("이동할 씬 이름 지정")]
+    private List<NamedString> SceneNames;
 
     void LateUpdate()
     {
@@ -59,9 +71,12 @@ public class StartSceneUIManager : MonoBehaviour
     {
         mode = (Mode)_mode;
     }
-
     public void ChangeScene()
     {
-
+        NamedString? target = SceneNames.Find(x => x.item == item && x.mode == mode && x.str != "");
+        if(NullCheck.Invoke(target))
+        {
+            SceneManager.LoadScene(target.str);
+        }
     }
 }
