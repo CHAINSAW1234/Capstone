@@ -11,7 +11,7 @@ namespace FireEvacuation
 {
 #pragma warning disable 0618
 
-    public class Section2 : MonoBehaviour
+    public class Section2_ver2 : MonoBehaviour
     {
         [Header("UI 설정")]
         public TMP_Text subtitleText;
@@ -68,7 +68,7 @@ namespace FireEvacuation
 
         private Rigidbody doorRb;
         private HingeJoint hingeJoint;
-        private BoxCollider doorTriggerCollider; // Moved declaration up here
+        private BoxCollider doorTriggerCollider;
         private bool isDoorEnabled = false;
         private bool isDoorOpening = false;
 
@@ -170,7 +170,7 @@ namespace FireEvacuation
             if (globalVolume != null && globalVolume.profile.TryGet(out vignette))
             {
                 vignette.active = true;
-                vignette.intensity.Override(0.5f);
+                vignette.intensity.Override(0.8f);
             }
             else
             {
@@ -182,7 +182,7 @@ namespace FireEvacuation
         {
             if (evacuationMap == null)
             {
-                Debug.LogError("탈출 경로 안내도 오브젝트가 지정되지 않았습니다!");
+                //Debug.LogError("탈출 경로 안내도 오브젝트가 지정되지 않았습니다!");
                 return;
             }
         }
@@ -275,7 +275,6 @@ namespace FireEvacuation
             limits.contactDistance = 0f;
             hingeJoint.limits = limits;
 
-            // Use the class field doorTriggerCollider
             doorTriggerCollider = emergencyDoor.GetComponent<BoxCollider>();
             if (doorTriggerCollider == null)
             {
@@ -323,28 +322,6 @@ namespace FireEvacuation
 
             if (other.CompareTag("Hand") && other.gameObject.transform.position.z > emergencyDoor.transform.position.z)
             {
-                if (!hasReachedEmergencyDoor)
-                {
-                    if (!SequenceManager.Instance.IsStepCompleted(3))
-                    {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(3);
-                        return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(4))
-                    {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(4);
-                        return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(5))
-                    {
-                        ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(5);
-                        return;
-                    }
-                }
-
                 OpenDoor();
             }
         }
@@ -363,10 +340,10 @@ namespace FireEvacuation
 
         void OnButtonHoverEnter(HoverEnterEventArgs args)
         {
-            if (!SequenceManager.Instance.IsStepCompleted(3))
+            if (!SequenceManager.Instance.IsStepCompleted(5))
             {
                 ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                SequenceManager.Instance.RecordSequenceError(3);
+                SequenceManager.Instance.RecordSequenceError(5);
                 return;
             }
             isButtonPressed = true;
@@ -402,23 +379,23 @@ namespace FireEvacuation
             {
                 if (!isButtonTriggerActivated)
                 {
-                    if (!SequenceManager.Instance.IsStepCompleted(3))
+                    if (!SequenceManager.Instance.IsStepCompleted(5))
                     {
                         ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(3);
+                        SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
                     onFireAlarmActivated?.Invoke();
                     isButtonTriggerActivated = true;
                     hasActivatedAlarm = true;
-                    SequenceManager.Instance.CompleteStep(4);
+                    SequenceManager.Instance.CompleteStep(6);
                     ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동해봅시다!");
 
                     if (playSoundOnButtonPress)
                     {
                         if (SoundManager.Instance == null)
                         {
-                           // Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
+                            //Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
                             return;
                         }
                         try
@@ -427,7 +404,7 @@ namespace FireEvacuation
                         }
                         catch (System.Exception e)
                         {
-                           // Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
+                            //Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
                         }
                     }
                 }
@@ -438,98 +415,92 @@ namespace FireEvacuation
         {
             if (headTransform == null) return;
 
-            if (!hasStartedSequence && startTrigger != null)
-            {
-                Collider startTriggerCollider = startTrigger.GetComponent<Collider>();
-                if (startTriggerCollider != null && startTriggerCollider.bounds.Contains(headTransform.position))
-                {
-                    hasStartedSequence = true;
-                    StartCoroutine(EvacuationSequence());
-                }
-            }
-
-            if (!hasEnteredSmokeArea && smokeTrigger != null)
-            {
-                Collider smokeTriggerCollider = smokeTrigger.GetComponent<Collider>();
-                if (smokeTriggerCollider != null && smokeTriggerCollider.bounds.Contains(headTransform.position))
-                {
-                    if (!SequenceManager.Instance.IsStepCompleted(3))
-                    {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(3);
-                        return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(4))
-                    {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(4);
-                        return;
-                    }
-                    hasEnteredSmokeArea = true;
-                    StartCoroutine(SmokeSequence());
-                }
-            }
-
-            if (!hasCrawled && smokeArrivalTrigger != null)
-            {
-                Collider arrivalTriggerCollider = smokeArrivalTrigger.GetComponent<Collider>();
-                if (arrivalTriggerCollider != null && arrivalTriggerCollider.bounds.Contains(headTransform.position))
-                {
-                    if (!hasEnteredSmokeArea)
-                    {
-                        ShowSubtitle("먼저 연기 구역에 들어가 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(5);
-                        return;
-                    }
-                    hasCrawled = true;
-                    onCrawlingStarted?.Invoke();
-                    SequenceManager.Instance.CompleteStep(5);
-                    ShowSubtitle("잘했어요! 포복을 완료했습니다. 이제 비상문으로 이동해봅시다!");
-                }
-            }
-
+            // 1. 비상문 대피 (Step 3)
             if (!hasReachedEmergencyDoor && doorTrigger != null)
             {
                 Collider doorApproachTriggerCollider = doorTrigger.GetComponent<Collider>();
                 if (doorApproachTriggerCollider != null && doorApproachTriggerCollider.bounds.Contains(headTransform.position))
                 {
-                    if (!SequenceManager.Instance.IsStepCompleted(3))
-                    {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(3);
-                        return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(4))
-                    {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(4);
-                        return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(5))
-                    {
-                        ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(5);
-                        return;
-                    }
                     hasReachedEmergencyDoor = true;
-                    SequenceManager.Instance.CompleteStep(6);
+                    SequenceManager.Instance.CompleteStep(3);
                     StartCoroutine(EmergencyDoorSequence());
                 }
             }
 
-            if (!hasCompletedEvacuation && exitTrigger != null)
+            // 2. StartTrigger 도착 (Step 4)
+            if (!hasStartedSequence && startTrigger != null && hasReachedEmergencyDoor)
+            {
+                Collider startTriggerCollider = startTrigger.GetComponent<Collider>();
+                if (startTriggerCollider != null && startTriggerCollider.bounds.Contains(headTransform.position))
+                {
+                    if (!SequenceManager.Instance.IsStepCompleted(3))
+                    {
+                        ShowSubtitle("먼저 비상문을 열고 통과해야 합니다!");
+                        SequenceManager.Instance.RecordSequenceError(3);
+                        return;
+                    }
+                    hasStartedSequence = true;
+                    SequenceManager.Instance.CompleteStep(4);
+                    StartCoroutine(EvacuationSequence());
+                }
+            }
+
+            // 3. 대피도 확인 (Step 5, HighlightEvacuationMap에서 완료)
+
+            // 4. 버튼 클릭 (Step 6, CheckButtonTriggerCollision에서 완료)
+
+            // 5. 포복 트리거 도착 (Step 7)
+            if (!hasEnteredSmokeArea && smokeTrigger != null && hasActivatedAlarm)
+            {
+                Collider smokeTriggerCollider = smokeTrigger.GetComponent<Collider>();
+                if (smokeTriggerCollider != null && smokeTriggerCollider.bounds.Contains(headTransform.position))
+                {
+                    if (!SequenceManager.Instance.IsStepCompleted(5))
+                    {
+                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                        SequenceManager.Instance.RecordSequenceError(5);
+                        return;
+                    }
+                    if (!SequenceManager.Instance.IsStepCompleted(6))
+                    {
+                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
+                        SequenceManager.Instance.RecordSequenceError(6);
+                        return;
+                    }
+                    hasEnteredSmokeArea = true;
+                    SequenceManager.Instance.CompleteStep(7);
+                    StartCoroutine(SmokeSequence());
+                }
+            }
+
+            // 6. 포복 (플레이어 동작)
+            // 7. 포복 도착 트리거 도착 (Step 8)
+            if (!hasCrawled && smokeArrivalTrigger != null && hasEnteredSmokeArea)
+            {
+                Collider arrivalTriggerCollider = smokeArrivalTrigger.GetComponent<Collider>();
+                if (arrivalTriggerCollider != null && arrivalTriggerCollider.bounds.Contains(headTransform.position))
+                {
+                    if (!SequenceManager.Instance.IsStepCompleted(7))
+                    {
+                        ShowSubtitle("먼저 연기 구역에 들어가 포복으로 이동해야 합니다!");
+                        SequenceManager.Instance.RecordSequenceError(7);
+                        return;
+                    }
+                    hasCrawled = true;
+                    onCrawlingStarted?.Invoke();
+                    SequenceManager.Instance.CompleteStep(8);
+                    ShowSubtitle("잘했어요! 포복을 완료했습니다. 훈련을 마무리했습니다!");
+                }
+            }
+
+            // 최종 탈출 확인
+            if (!hasCompletedEvacuation && exitTrigger != null && hasReachedEmergencyDoor)
             {
                 Collider exitTriggerCollider = exitTrigger.GetComponent<Collider>();
                 if (exitTriggerCollider != null && exitTriggerCollider.bounds.Contains(headTransform.position))
                 {
-                    if (!hasReachedEmergencyDoor)
-                    {
-                        ShowSubtitle("먼저 비상문을 열고 통과해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(6);
-                        return;
-                    }
                     hasCompletedEvacuation = true;
-                    ShowSubtitle("축하합니다 모든 화재 대피 훈련이 완료되었습니다!");
+                    ShowSubtitle("축하합니다! 모든 화재 대피 훈련이 완료되었습니다!");
                     onEmergencyDoorOpened?.Invoke();
                 }
             }
@@ -537,14 +508,17 @@ namespace FireEvacuation
 
         IEnumerator EvacuationSequence()
         {
-            ShowSubtitle("건물 밖으로 대피 시 대피 경로를 파악하는 것이 가장 중요합니다.");
+            ShowSubtitle("잘했습니다! 다음으로는 화재 대피 시 대피 경로를 파악하는 것이 중요합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("먼저 앞에 있는 탈출 경로 안내도를 확인하여 대피 경로를 파악하세요.");
+            ShowSubtitle("평상 시 자주 이용하는 장소가 아니라면 방문 시 대피 경로를 미리 파악해놓는 것이 중요합니다. ");
+            yield return new WaitForSeconds(textDelay);
+
+            ShowSubtitle("앞의 탈출 경로 안내도를 확인하여 대피 경로를 파악하세요.");
             HighlightEvacuationMap();
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("안내도를 확인한 후, 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
+            ShowSubtitle("안내도를 확인한 후, 가능하다면 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
             yield return new WaitForSeconds(textDelay);
         }
 
@@ -561,12 +535,10 @@ namespace FireEvacuation
                 }
             }
 
-            // 🔥 [추가] 연기 발생 사운드 재생
             if (SoundManager.Instance != null)
             {
                 try
                 {
-                    // 원하는 사운드 그룹과 클립 번호를 설정 (예시로 1, 0 사용)
                     SoundManager.Instance.PlayOneShot(1, 0);
                 }
                 catch (System.Exception e)
@@ -585,14 +557,13 @@ namespace FireEvacuation
             ShowSubtitle("화재로 발생한 연기는 독성이 있어 오래 노출되면 위험합니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 이동해야합니다.");
+            ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 이동해야 합니다.");
             yield return new WaitForSeconds(textDelay);
         }
 
-
         IEnumerator EmergencyDoorSequence()
         {
-            ShowSubtitle("비상문에 도착했습니다! 다음은 비상문 통과에 대해 배워봅시다.");
+            ShowSubtitle("비상문에 도착했습니다! 비상문 통과에 대해 배워봅시다.");
             yield return new WaitForSeconds(textDelay);
 
             ShowSubtitle("실제 화재 상황에서는 비상문을 막다른 길로 오해해 위험에 처하는 경우가 많습니다.");
@@ -605,6 +576,7 @@ namespace FireEvacuation
             HighlightEmergencyDoor();
             isDoorEnabled = true;
             yield return new WaitForSeconds(textDelay);
+
         }
 
         void ShowSubtitle(string message)
@@ -625,7 +597,7 @@ namespace FireEvacuation
                 {
                     mapRenderer.material.color = Color.yellow;
                     hasHighlightedMap = true;
-                    SequenceManager.Instance.CompleteStep(3);
+                    SequenceManager.Instance.CompleteStep(5);
                 }
             }
         }
@@ -650,4 +622,5 @@ namespace FireEvacuation
             }
         }
     }
+
 }

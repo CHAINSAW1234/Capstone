@@ -26,7 +26,7 @@ namespace FireEvacuation
 
         [Header("Rag 설정")]
         public GameObject ragObject; // Rag 오브젝트
-        public GameObject waterObject; // Water 오브젝트
+        public GameObject[] waterObjects = new GameObject[2]; // Water 오브젝트 배열 (2개)
         public Transform headTransform; // XR Rig의 Main Camera
         public float protectionDistance = 0.2f; // 머리와의 보호 감지 거리
 
@@ -124,30 +124,32 @@ namespace FireEvacuation
                 //Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
             }
 
-            if (waterObject == null)
+            // 두 개의 Water 오브젝트 초기화
+            for (int i = 0; i < waterObjects.Length; i++)
             {
-                //Debug.LogError("Water 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-            else
-            {
-                Collider waterCollider = waterObject.GetComponent<Collider>();
+                if (waterObjects[i] == null)
+                {
+                    //Debug.LogError($"Water 오브젝트 {i}가 지정되지 않았습니다!");
+                    continue;
+                }
+
+                Collider waterCollider = waterObjects[i].GetComponent<Collider>();
                 if (waterCollider == null)
                 {
-                    waterCollider = waterObject.AddComponent<BoxCollider>();
+                    waterCollider = waterObjects[i].AddComponent<BoxCollider>();
                     waterCollider.isTrigger = true;
-                    //Debug.LogWarning("Water 오브젝트에 콜라이더가 없어 추가했습니다.");
+                    //Debug.LogWarning($"Water 오브젝트 {i}에 콜라이더가 없어 추가했습니다.");
                 }
                 else if (!waterCollider.isTrigger)
                 {
                     waterCollider.isTrigger = true;
-                    //Debug.LogWarning("Water 오브젝트의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
+                    //Debug.LogWarning($"Water 오브젝트 {i}의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
                 }
 
-                if (!waterObject.CompareTag("Water"))
+                if (!waterObjects[i].CompareTag("Water"))
                 {
-                    //Debug.LogWarning("Water 오브젝트에 'Water' 태그가 없습니다. 태그를 추가합니다.");
-                    waterObject.tag = "Water";
+                    //Debug.LogWarning($"Water 오브젝트 {i}에 'Water' 태그가 없습니다. 태그를 추가합니다.");
+                    waterObjects[i].tag = "Water";
                 }
             }
 
@@ -314,23 +316,29 @@ namespace FireEvacuation
             }
 
             // 물에 천을 넣었는지 콜라이더 겹침으로 확인
-            if (!hasRagWetted && hasRagGrabbed && ragObject != null && waterObject != null)
+            if (!hasRagWetted && hasRagGrabbed && ragObject != null)
             {
                 Collider ragCollider = ragObject.GetComponent<Collider>();
-                Collider waterCollider = waterObject.GetComponent<Collider>();
-                if (ragCollider != null && waterCollider != null && ragCollider.bounds.Intersects(waterCollider.bounds))
+                if (ragCollider != null)
                 {
-                    if (!isWetting)
+                    foreach (GameObject waterObject in waterObjects)
                     {
-                        isSearchingForWater = false;
-                        isWetting = true;
-                        wetTimer = 0f;
-                        StartCoroutine(WetRagSequence());
+                        if (waterObject == null) continue;
+                        Collider waterCollider = waterObject.GetComponent<Collider>();
+                        if (waterCollider != null && ragCollider.bounds.Intersects(waterCollider.bounds))
+                        {
+                            if (!isWetting)
+                            {
+                                isSearchingForWater = false;
+                                isWetting = true;
+                                wetTimer = 0f;
+                                StartCoroutine(WetRagSequence());
+                            }
+                            break; // 하나라도 트리거되면 루프 종료
+                        }
                     }
                 }
-              
             }
-
 
             if (headTransform != null && ragObject != null)
             {
@@ -500,7 +508,7 @@ namespace FireEvacuation
             ShowSubtitle("잘했습니다! 방을 나왔습니다!");
             yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이제 건물 밖으로 대피해봅시다.");
+            ShowSubtitle("이제 안전하게 건물 밖으로 대피하는 법을 배워봅시다.");
             yield return new WaitForSeconds(textDelay);
         }
 
@@ -519,12 +527,15 @@ namespace FireEvacuation
 
         void HighlightWater()
         {
-            if (waterObject != null)
+            foreach (GameObject waterObject in waterObjects)
             {
-                Renderer waterRenderer = waterObject.GetComponent<Renderer>();
-                if (waterRenderer != null)
+                if (waterObject != null)
                 {
-                    waterRenderer.material.color = Color.yellow;
+                    Renderer waterRenderer = waterObject.GetComponent<Renderer>();
+                    if (waterRenderer != null)
+                    {
+                        waterRenderer.material.color = Color.yellow;
+                    }
                 }
             }
             ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
@@ -560,7 +571,7 @@ namespace FireEvacuation
             {
                 if (vignette != null)
                 {
-                    vignette.intensity.Override(0.5f);
+                    vignette.intensity.Override(0.8f);
                 }
             }
         }
@@ -577,4 +588,5 @@ namespace FireEvacuation
             searchTimer = waterSearchTime;
         }
     }
+
 }
