@@ -14,6 +14,7 @@ public class NozzleController : MonoBehaviour
     private Vector3 OriginPosition;
     private Quaternion OriginRotation;
 
+    public bool IsGrabbed { get => isGrabbed; }
     private bool isGrabbed = false;
     private bool isRestoring = false;
 
