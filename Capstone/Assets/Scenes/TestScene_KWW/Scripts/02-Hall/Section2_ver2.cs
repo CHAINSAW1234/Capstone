@@ -49,6 +49,10 @@ namespace FireEvacuation
         private float pushForce = 10f;
         private float triggerDistance = 0.3f;
 
+        [Header("Elevator Trigger 설정")]
+        public GameObject elevatorTrigger;
+        private bool hasEnteredElevator = false;
+
         [Header("Player Head Transform")]
         public Transform headTransform;
 
@@ -117,6 +121,7 @@ namespace FireEvacuation
                 startTriggerCollider = startTrigger.AddComponent<BoxCollider>();
             }
             startTriggerCollider.isTrigger = true;
+
         }
 
         void SetupButton()
@@ -369,6 +374,7 @@ namespace FireEvacuation
             }
 
             CheckTriggerCollision();
+            CheckElevatorTrigger();
         }
 
         void CheckButtonTriggerCollision()
@@ -480,16 +486,10 @@ namespace FireEvacuation
                 Collider arrivalTriggerCollider = smokeArrivalTrigger.GetComponent<Collider>();
                 if (arrivalTriggerCollider != null && arrivalTriggerCollider.bounds.Contains(headTransform.position))
                 {
-                    if (!SequenceManager.Instance.IsStepCompleted(7))
-                    {
-                        ShowSubtitle("먼저 연기 구역에 들어가 포복으로 이동해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(7);
-                        return;
-                    }
                     hasCrawled = true;
                     onCrawlingStarted?.Invoke();
                     SequenceManager.Instance.CompleteStep(8);
-                    ShowSubtitle("잘했어요! 포복을 완료했습니다. 훈련을 마무리했습니다!");
+                    ShowSubtitle("잘했어요! 포복을 완료했습니다. 마지막으로 비상 탈출구를 찾아 밖으로 탈출합시다!");
                 }
             }
 
@@ -500,17 +500,34 @@ namespace FireEvacuation
                 if (exitTriggerCollider != null && exitTriggerCollider.bounds.Contains(headTransform.position))
                 {
                     hasCompletedEvacuation = true;
-                    ShowSubtitle("축하합니다! 모든 화재 대피 훈련이 완료되었습니다!");
+                    ShowSubtitle("잘했습니다! 다음으로는 화재 대피 시 대피 경로를 파악하는 것이 중요합니다!");
                     onEmergencyDoorOpened?.Invoke();
                 }
             }
         }
 
+        void CheckElevatorTrigger()
+        {
+            if (hasEnteredElevator || elevatorTrigger == null || headTransform == null) return;
+
+            Collider elevatorTriggerCollider = elevatorTrigger.GetComponent<Collider>();
+            if (elevatorTriggerCollider != null && elevatorTriggerCollider.bounds.Contains(headTransform.position))
+            {
+                hasEnteredElevator = true;
+                StartCoroutine(ElevatorSequence());
+            }
+        }
+
+        IEnumerator ElevatorSequence()
+        {
+            ShowSubtitle("화재 대피 시 엘리베이터 사용은 전원 차단의 위험이 있습니다.");
+            yield return new WaitForSeconds(textDelay);
+            ShowSubtitle("엘리베이터 대신 가까운 비상 계단으로 이동하세요.");
+            yield return new WaitForSeconds(textDelay);
+        }
+
         IEnumerator EvacuationSequence()
         {
-            ShowSubtitle("잘했습니다! 다음으로는 화재 대피 시 대피 경로를 파악하는 것이 중요합니다!");
-            yield return new WaitForSeconds(textDelay);
-
             ShowSubtitle("평상 시 자주 이용하는 장소가 아니라면 방문 시 대피 경로를 미리 파악해놓는 것이 중요합니다. ");
             yield return new WaitForSeconds(textDelay);
 

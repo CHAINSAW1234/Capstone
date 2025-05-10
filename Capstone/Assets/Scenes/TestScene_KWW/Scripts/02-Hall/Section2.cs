@@ -38,6 +38,10 @@ namespace FireEvacuation
         public List<ParticleSystem> smokeEffects;
         public GameObject smokeArrivalTrigger;
 
+        [Header("Elevator Trigger 설정")]
+        public GameObject elevatorTrigger;
+        private bool hasEnteredElevator = false;
+
         [Header("포복 트리거 설정")]
         public GameObject crawlingTrigger;
         private Collider crawlingTriggerCollider;
@@ -392,6 +396,19 @@ namespace FireEvacuation
             }
 
             CheckTriggerCollision();
+            CheckElevatorTrigger();
+        }
+
+        void CheckElevatorTrigger()
+        {
+            if (hasEnteredElevator || elevatorTrigger == null || headTransform == null) return;
+
+            Collider elevatorTriggerCollider = elevatorTrigger.GetComponent<Collider>();
+            if (elevatorTriggerCollider != null && elevatorTriggerCollider.bounds.Contains(headTransform.position))
+            {
+                hasEnteredElevator = true;
+                StartCoroutine(ElevatorSequence());
+            }
         }
 
         void CheckButtonTriggerCollision()
@@ -545,6 +562,14 @@ namespace FireEvacuation
             yield return new WaitForSeconds(textDelay);
 
             ShowSubtitle("안내도를 확인한 후, 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
+            yield return new WaitForSeconds(textDelay);
+        }
+
+        IEnumerator ElevatorSequence()
+        {
+            ShowSubtitle("화재 대피 시 엘리베이터 사용은 전원 차단의 위험이 있습니다.");
+            yield return new WaitForSeconds(textDelay);
+            ShowSubtitle("엘리베이터 대신 가까운 비상 계단으로 이동하세요.");
             yield return new WaitForSeconds(textDelay);
         }
 

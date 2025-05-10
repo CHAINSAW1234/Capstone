@@ -1,26 +1,34 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
 using FireEvacuation;
+using UnityEngine.Events;
 
 namespace FireEvacuation
 {
     public class EndUI : MonoBehaviour
     {
-        [Header("UI ¼³Á¤")]
-        [SerializeField] private GameObject previousUI; // ºñÈ°¼ºÈ­ÇÒ ÀÌÀü UI
-        [SerializeField] private GameObject endUI; // È°¼ºÈ­ÇÒ Á¾·á UI
-        [SerializeField] private TMP_Text elapsedTimeText; // °æ°ú ½Ã°£À» Ç¥½ÃÇÒ TMP_Text
-        [SerializeField] private RawImage[] stepImages; // ´Ü°èº° Ãâ·Â ÀÌ¹ÌÁö ¿ÀºêÁ§Æ® (ÃÑ 7°³, RawImage)
-        [SerializeField] private Texture2D[] incorrectTextures; // Æ²·ÈÀ» ¶§ »ç¿ëÇÒ ÅØ½ºÃ³µé (ÃÑ 7°³)
+        [Header("UI ì„¤ì •")]
+        [SerializeField] private GameObject previousUI; // ë¹„í™œì„±í™”í•  ì´ì „ UI
+        [SerializeField] private GameObject endUI; // í™œì„±í™”í•  ì¢…ë£Œ UI
+        [SerializeField] private TMP_Text elapsedTimeText; // ê²½ê³¼ ì‹œê°„ì„ í‘œì‹œí•  TMP_Text
+        [SerializeField] private RawImage[] stepImages; // ë‹¨ê³„ë³„ ì¶œë ¥ ì´ë¯¸ì§€ ì˜¤ë¸Œì íŠ¸ (ì´ 7ê°œ, RawImage)
+        [SerializeField] private Texture2D[] incorrectTextures; // í‹€ë ¸ì„ ë•Œ ì‚¬ìš©í•  í…ìŠ¤ì²˜ë“¤ (ì´ 7ê°œ)
 
-        [Header("Å¸ÀÌ¸Ó ¼³Á¤")]
-        [SerializeField] private TimeManager timeManager; // TimeManager ÂüÁ¶
+        [Header("íƒ€ì´ë¨¸ ì„¤ì •")]
+        [SerializeField] private TimeManager timeManager; // TimeManager ì°¸ì¡°
 
-        [Header("Æ®¸®°Å ¼³Á¤")]
-        [SerializeField] private GameObject triggerObject; // Æ®¸®°Å ¿ÀºêÁ§Æ®
-        [SerializeField] private string triggerTag = "Player"; // Æ®¸®°Å ÅÂ±×
-        [SerializeField] private bool isTriggered = false; // Æ®¸®°Å »óÅÂ
+        [Header("íŠ¸ë¦¬ê±° ì„¤ì •")]
+        [SerializeField] private GameObject triggerObject; // íŠ¸ë¦¬ê±° ì˜¤ë¸Œì íŠ¸
+        [SerializeField] private string triggerTag = "Player"; // íŠ¸ë¦¬ê±° íƒœê·¸
+        [SerializeField] private bool isTriggered = false; // íŠ¸ë¦¬ê±° ìƒíƒœ
+
+        [Header("íŠ¸ë¦¬ê±° ì´ë²¤íŠ¸")]
+        public UnityEvent OnTriggerReached;
+
+        [Header("ì»¨íŠ¸ë¡¤ëŸ¬ ì „í™˜ ì„¤ì •")]
+        [SerializeField] private GameObject[] previousControllers; // ì´ì „ ì»¨íŠ¸ë¡¤ëŸ¬ë“¤
+        [SerializeField] private GameObject[] newControllers; // ì „í™˜í•  ì»¨íŠ¸ë¡¤ëŸ¬ë“¤
 
         private void Start()
         {
@@ -31,44 +39,44 @@ namespace FireEvacuation
         {
             if (previousUI == null)
             {
-                Debug.LogError("Previous UI°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("Previous UIê°€ ì§€ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
             if (endUI == null)
             {
-                Debug.LogError("End UI°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("End UIê°€ ì§€ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
             if (elapsedTimeText == null)
             {
-                Debug.LogError("Elapsed Time Text (TMP_Text)°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("Elapsed Time Text (TMP_Text)ê°€ ì§€ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
             if (stepImages == null || stepImages.Length != 7)
             {
-                Debug.LogError("StepImages°¡ Á¤È®È÷ 7°³°¡ ¾Æ´Õ´Ï´Ù!", this);
+                Debug.LogError("StepImagesê°€ ì •í™•íˆ 7ê°œê°€ ì•„ë‹™ë‹ˆë‹¤!", this);
                 return;
             }
             if (incorrectTextures == null || incorrectTextures.Length != 7)
             {
-                Debug.LogError("IncorrectTextures°¡ Á¤È®È÷ 7°³°¡ ¾Æ´Õ´Ï´Ù!", this);
+                Debug.LogError("IncorrectTexturesê°€ ì •í™•íˆ 7ê°œê°€ ì•„ë‹™ë‹ˆë‹¤!", this);
                 return;
             }
             if (timeManager == null)
             {
-                Debug.LogError("TimeManager°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("TimeManagerê°€ ì§€ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
             if (triggerObject == null)
             {
-                Debug.LogError("Trigger Object°¡ ÁöÁ¤µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("Trigger Objectê°€ ì§€ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
 
             Collider triggerCollider = triggerObject.GetComponent<Collider>();
             if (triggerCollider == null || !triggerCollider.isTrigger)
             {
-                Debug.LogError("Trigger Object¿¡ Collider°¡ ¾ø°Å³ª IsTrigger°¡ È°¼ºÈ­µÇÁö ¾Ê¾Ò½À´Ï´Ù!", this);
+                Debug.LogError("Trigger Objectì— Colliderê°€ ì—†ê±°ë‚˜ IsTriggerê°€ í™œì„±í™”ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!", this);
                 return;
             }
 
@@ -81,6 +89,8 @@ namespace FireEvacuation
             {
                 isTriggered = true;
                 ActivateEndUI();
+                SwitchControllers();
+                OnTriggerReached?.Invoke();
             }
         }
 
@@ -98,6 +108,8 @@ namespace FireEvacuation
                     {
                         isTriggered = true;
                         ActivateEndUI();
+                        SwitchControllers();
+                        OnTriggerReached?.Invoke();
                         break;
                     }
                 }
@@ -113,7 +125,7 @@ namespace FireEvacuation
             float elapsedTime = timeManager.GetElapsedTime();
             int minutes = Mathf.FloorToInt(elapsedTime / 60f);
             int seconds = Mathf.FloorToInt(elapsedTime % 60f);
-            elapsedTimeText.text = $"ÃÑ °æ°ú ½Ã°£: {minutes:00}:{seconds:00}";
+            elapsedTimeText.text = $"ì´ ê²½ê³¼ ì‹œê°„: {minutes:00}:{seconds:00}";
 
             DisplaySequenceStatus();
         }
@@ -126,6 +138,18 @@ namespace FireEvacuation
                 {
                     stepImages[i].texture = incorrectTextures[i];
                 }
+            }
+        }
+
+        private void SwitchControllers()
+        {
+            foreach (var controller in previousControllers)
+            {
+                if (controller != null) controller.SetActive(false);
+            }
+            foreach (var controller in newControllers)
+            {
+                if (controller != null) controller.SetActive(true);
             }
         }
     }

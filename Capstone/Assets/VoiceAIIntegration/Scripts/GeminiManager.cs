@@ -16,7 +16,12 @@ public class GeminiManager : MonoBehaviour
         {
             using (UnityWebRequest request = BuildRequest(question))
             {
+                Debug.Log($"[GeminiManager] 요청 URL: {request.url}");
+                Debug.Log($"[GeminiManager] 요청 본문: {Encoding.UTF8.GetString(request.uploadHandler.data)}");
                 yield return request.SendWebRequest();
+
+                Debug.Log($"[GeminiManager] 응답 코드: {request.responseCode}");
+                Debug.Log($"[GeminiManager] 응답 본문: {request.downloadHandler.text}");
 
                 if (request.result == UnityWebRequest.Result.Success)
                 {
@@ -24,15 +29,15 @@ public class GeminiManager : MonoBehaviour
                     onResponse?.Invoke(answer);
                     yield break;
                 }
-                else if (request.responseCode == 429) // Too Many Requests
+                else if (request.responseCode == 429)
                 {
-                    Debug.LogWarning("Gemini API Rate Limit, 재시도 중...");
+                    Debug.LogWarning($"Gemini API Rate Limit, 재시도 {retryCount + 1}/{maxRetries}...");
                     retryCount++;
                     yield return new WaitForSeconds(2 * retryCount);
                 }
                 else
                 {
-                    Debug.LogError($"Gemini API Error: {request.error}\n{request.downloadHandler.text}");
+                    Debug.LogError($"Gemini API Error: {request.error}\nResponse Code: {request.responseCode}\nResponse: {request.downloadHandler.text}");
                     yield break;
                 }
             }
