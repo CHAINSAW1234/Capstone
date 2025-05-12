@@ -25,7 +25,7 @@ public class UIMessageManager : MonoBehaviour
     // Start is called once before the first execution of Update after the MonoBehaviour is created
     void Start()
     {
-        StartCoroutine(SequenceStart());
+        StartCoroutine(SequenceTargeting());
     }
 
     // Update is called once per frame
@@ -46,7 +46,7 @@ public class UIMessageManager : MonoBehaviour
     void NextState()
     {
         state = state + 1;
-        StartCoroutine("Sequence" + state.GetType().GetField(state.ToString()));
+        StartCoroutine("Sequence" + state.GetType().GetEnumName(state));
     }
     IEnumerator SequenceStart()
     {
@@ -60,6 +60,7 @@ public class UIMessageManager : MonoBehaviour
         yield return new WaitForSeconds(textDelay);
 
         NextState();
+        yield break;
     }
 
     IEnumerator SequencePinOff()
@@ -86,7 +87,10 @@ public class UIMessageManager : MonoBehaviour
                 SendString("핀을 뽑았어요!");
                 yield return new WaitForSeconds(textDelay);
                 NextState();
+                yield break;
             }
+
+            yield return null;
         }
 
     }
@@ -102,16 +106,19 @@ public class UIMessageManager : MonoBehaviour
         {
             if (!nozzle.IsGrabbed && fireExtinguisher.TrySpray())
             {
-                SendString("아직 핀을 뽑지 않았어요!");
+                SendString("노즐을 잡아야되요!");
                 yield return new WaitForSeconds(textDelay);
             }
 
-            if (fireExtinguisher.TrySpray() && CheckTargeting())
+            if (nozzle.IsGrabbed && CheckTargeting())
             {
                 SendString("조준이 완료됐어요!");
-                yield return new WaitForSeconds(textDelay/2);
+                yield return new WaitForSeconds(textDelay / 2);
                 NextState();
+                yield break;
             }
+
+            yield return null;
         }
 
     }
@@ -121,19 +128,13 @@ public class UIMessageManager : MonoBehaviour
         Vector3 nozzlePosition = nozzle.transform.position;
         Vector3 firePosition = fire.transform.position;
 
-        Vector3 look = firePosition - nozzlePosition;
-        Vector3 fireLook = fire.transform.forward;
+        Vector3 look = (firePosition - nozzlePosition).normalized;
+        Vector3 fireLook = nozzle.transform.up.normalized;
 
-        float dot = Vector3.Dot(look, fireLook);
-
+        float dot = Vector3.Dot(fireLook, look);
         float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
 
-        if (angle < 45)
-        {
-            return true;
-        }
-
-        return false;
+        return angle < 30f;
     }
 
     IEnumerator SequenceShot()
@@ -141,7 +142,18 @@ public class UIMessageManager : MonoBehaviour
         SendString("마지막으로 분사를 통해 불을 끄면 되요");
         yield return new WaitForSeconds(textDelay);
 
-        SendString("");
+        SendString("소화기를 잡은손의 버튼을 눌러서 소화기를 분사하세요!");
         yield return new WaitForSeconds(textDelay);
+
+        if(!fire.activeSelf)
+        {
+            SendString("화제를 진압했어요!");
+            yield return new WaitForSeconds(textDelay);
+
+            SendString("이상으로 소화기 사용 훈련을 종료하겠습니다!");
+            yield return new WaitForSeconds(textDelay);
+
+            yield break;
+        }
     }
 }
