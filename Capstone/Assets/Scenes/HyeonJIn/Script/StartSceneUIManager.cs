@@ -73,6 +73,8 @@ public class StartSceneUIManager : MonoBehaviour
     }
     public void ChangeScene()
     {
+        PlayerPrefs.SetInt("mode", (int)mode);
+
         NamedString? target = SceneNames.Find(x => x.item == item && x.mode == mode && x.str != "");
         if(NullCheck.Invoke(target))
         {
