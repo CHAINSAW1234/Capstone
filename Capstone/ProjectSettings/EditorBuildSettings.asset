@@ -12,7 +12,10 @@ EditorBuildSettings:
     path: Assets/Scenes/Scene_Evacuation.unity
     guid: 630915c62d9f2f64c8a5f2acf191a5f1
   - enabled: 1
-    path: Assets/Scenes/JHJ_TestScene.unity
+    path: Assets/Scenes/Scene_Evacuation2.unity
+    guid: 3942e3983c8e31849a0c3df458a72759
+  - enabled: 1
+    path: Assets/Scenes/Scene_FireExtinguisher.unity
     guid: b942d79ec03111846bdacaab75af1f22
   m_configObjects:
     Unity.XR.Oculus.Settings: {fileID: 11400000, guid: bfa1182bd221b4ca89619141f66f1260, type: 2}
