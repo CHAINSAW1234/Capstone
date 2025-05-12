@@ -8,10 +8,28 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace FireEvacuation
 {
-#pragma warning disable 0618 // XRBaseController에 대한 폐기 경고 억제
+#pragma warning disable 0618 // XRBaseController에 대한 폐지 경고 억제
 
     public class Section1 : MonoBehaviour
     {
+        [Header("훈련 모드 설정")]
+        [SerializeField] private bool isPracticeMode = true; // 연습/평가 모드 토글 (Inspector에서 설정 가능)
+        public GameObject[] highlightObjects; // 하이라이트할 물체들 (사용하지 않음, 호환성 유지)
+
+        [Header("아웃라인 설정")]
+        public Color outlineColor = Color.red; // 아웃라인 색상 (기본값: 빨간색)
+        public float outlineWidth = 2f; // 아웃라인 두께
+        public GameObject outlineRagObject; // 아웃라인 적용할 Rag 오브젝트
+        public GameObject[] outlineWaterObjects = new GameObject[2]; // 아웃라인 적용할 Water 오브젝트 배열 (2개)
+        public GameObject outlineDoorObject; // 아웃라인 적용할 문 오브젝트
+        public GameObject outlineDoorHandleObject; // 아웃라인 적용할 문 오브젝트
+
+        [Header("화살표 설정")]
+        public GameObject WaterArrow1; // 첫 번째 화살표 오브젝트
+        public GameObject WaterArrow2; // 두 번째 화살표 오브젝트
+        public GameObject DoorArrow; // 두 번째 화살표 오브젝트
+        public GameObject NextSectionArrow; // 두 번째 화살표 오브젝트
+
         [Header("UI 설정")]
         public TMP_Text subtitleText; // 자막 텍스트 UI
         public float textDelay = 5f; // 자막 표시 지연 시간 (초)
@@ -37,7 +55,7 @@ namespace FireEvacuation
         public GameObject frontDoorTrigger; // 문 앞 트리거
         public GameObject backDoorTrigger; // 문 반대편 트리거
 
-        // 타이머 관련 변수
+        [Header("타이머 설정")]
         public float waterSearchTime = 15f; // 물 찾기 시간
         private float searchTimer = 0f;
         private bool isSearchingForWater = false;
@@ -45,7 +63,7 @@ namespace FireEvacuation
         private float wetTimer = 0f;
         private bool isWetting = false;
 
-        // UnityEvent
+        [Header("이벤트 설정")]
         [SerializeField] public UnityEvent onProtectionActivated;
         [SerializeField] public UnityEvent onProtectionDeactivated;
 
@@ -68,13 +86,35 @@ namespace FireEvacuation
         private bool hasReachedFrontDoor = false;
         private bool hasReachedBackDoor = false;
 
+        private bool isHandleTouched = false;
+        private float handleTouchTime = 0f;
+        private float requiredTouchTime = 3f; // 온도 확인에 필요한 최소 접촉 시간
+        private bool isHandleSafe = false;
+
+        [Header("Haptic 설정")]
+        public XRBaseController leftHandController;
+        public XRBaseController rightHandController;
+        public float vibrationIntensity = 0.5f;
+        public float vibrationDuration = 0.1f;
+
         private void Start()
         {
-            // 강제로 hasRagWetted 초기화 (static 변수로 인해 테스트 중 유지될 수 있음)
             hasRagWetted = false;
             InitializeRag();
             InitPostProcessing();
             SetupDoor();
+
+            // 화살표 초기 비활성화
+            if (WaterArrow1 != null) WaterArrow1.SetActive(false);
+            if (WaterArrow2 != null) WaterArrow2.SetActive(false);
+            if (DoorArrow != null) DoorArrow.SetActive(false);
+            if (NextSectionArrow != null) NextSectionArrow.SetActive(false);
+
+            if (!isPracticeMode && subtitleText != null)
+            {
+                subtitleText.gameObject.SetActive(false);
+            }
+
             StartCoroutine(DrillSequence());
         }
 
@@ -106,7 +146,6 @@ namespace FireEvacuation
                 cubeRenderer.material.color = Color.red;
             }
 
-            // Ensure ragObject has a collider and Rigidbody
             Collider ragCollider = ragObject.GetComponent<Collider>();
             if (ragCollider == null)
             {
@@ -124,7 +163,6 @@ namespace FireEvacuation
                 //Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
             }
 
-            // 두 개의 Water 오브젝트 초기화
             for (int i = 0; i < waterObjects.Length; i++)
             {
                 if (waterObjects[i] == null)
@@ -192,7 +230,7 @@ namespace FireEvacuation
             doorRb.mass = 1f;
             doorRb.angularDamping = 0.05f;
             doorRb.useGravity = true;
-            doorRb.isKinematic = false;
+            doorRb.isKinematic = true;
             doorRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
 
             hingeJoint = doorObject.GetComponent<HingeJoint>();
@@ -230,17 +268,19 @@ namespace FireEvacuation
 
         IEnumerator DrillSequence()
         {
-            ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이 훈련은 아파트 화재 상황에서 안전한 대피 방법을 익히는 과정입니다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("이 훈련은 아파트 화재 상황에서 안전한 대피 방법을 익히는 과정입니다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
+                yield return new WaitForSeconds(textDelay);
+            }
 
-            // Wait for SoundManager to be ready
-            int maxRetries = 50; // Retry for up to 5 seconds (50 * 0.1s)
+            int maxRetries = 50;
             int retries = 0;
             while (SoundManager.Instance == null && retries < maxRetries)
             {
@@ -252,7 +292,7 @@ namespace FireEvacuation
             if (SoundManager.Instance == null)
             {
                 //Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
-                yield break; // Exit the coroutine if SoundManager is not available
+                yield break;
             }
 
             try
@@ -267,20 +307,25 @@ namespace FireEvacuation
 
             yield return EnableVignetteEffect();
 
-            yield return FlashingSubtitle("건물에 화재가 발생했습니다!", 0.6f);
-            hasFireRecognized = true;
-            SequenceManager.Instance.CompleteStep(0); // 상황 인지 완료
-
-            ShowSubtitle("화재 발생 시, 가장 먼저 젖은 옷이나 수건 등의 천으로 호흡기를 보호하는 것이 중요합니다.");
-            yield return new WaitForSeconds(textDelay);
-
-            ShowSubtitle("주변에서 호흡 보호에 사용할 천을 찾아보세요!");
-            yield return new WaitForSeconds(textDelay);
-
-            if (vignette != null)
+            if (isPracticeMode)
             {
-                vignette.active = true;
-                vignette.intensity.Override(0.5f);
+                yield return FlashingSubtitle("건물에 화재가 발생했습니다!", 0.6f);
+            }
+            hasFireRecognized = true;
+            SequenceManager.Instance.CompleteStep(0);
+
+            if (isPracticeMode)
+            {
+                ShowSubtitle("화재 발생 시, 가장 먼저 젖은 옷이나 수건 등의 천으로 호흡기를 보호하는 것이 중요합니다.");
+                yield return new WaitForSeconds(textDelay);
+
+                ShowSubtitle("주변에서 호흡 보호에 사용할 천을 찾아보세요!");
+                if (outlineRagObject != null && isPracticeMode) AddOutline(outlineRagObject);
+                yield return new WaitForSeconds(textDelay);
+            }
+            else
+            {
+                if (outlineRagObject != null) AddOutline(outlineRagObject);
             }
         }
 
@@ -288,15 +333,16 @@ namespace FireEvacuation
         {
             if (!hasFireRecognized)
             {
-                ShowSubtitle("먼저 경보를 듣고 상황을 파악하세요!");
-                SequenceManager.Instance.RecordSequenceError(0); // 호흡 보호 순서 오류
+                if (isPracticeMode) ShowSubtitle("첫째로 화재 상황을 인지해야 합니다!");
+                SequenceManager.Instance.RecordSequenceError(0);
                 return;
             }
 
             if (!hasRagGrabbed)
             {
                 hasRagGrabbed = true;
-                ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
+                if (outlineRagObject != null) RemoveOutline(outlineRagObject);
+                if (isPracticeMode) ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
                 isSearchingForWater = true;
                 searchTimer = waterSearchTime;
                 //Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
@@ -310,12 +356,11 @@ namespace FireEvacuation
                 searchTimer -= Time.deltaTime;
                 if (searchTimer <= 0)
                 {
-                    HighlightWater();
+                    if (isPracticeMode) AddOutlineToWater();
                     isSearchingForWater = false;
                 }
             }
 
-            // 물에 천을 넣었는지 콜라이더 겹침으로 확인
             if (!hasRagWetted && hasRagGrabbed && ragObject != null)
             {
                 Collider ragCollider = ragObject.GetComponent<Collider>();
@@ -334,7 +379,7 @@ namespace FireEvacuation
                                 wetTimer = 0f;
                                 StartCoroutine(WetRagSequence());
                             }
-                            break; // 하나라도 트리거되면 루프 종료
+                            break;
                         }
                     }
                 }
@@ -347,17 +392,17 @@ namespace FireEvacuation
                 {
                     if (!hasRagGrabbed)
                     {
-                        ShowSubtitle("먼저 천을 집어주세요!");
+                        if (isPracticeMode) ShowSubtitle("먼저 천을 집어주세요!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
-                    SequenceManager.Instance.CompleteStep(1); // 호흡 보호 완료
+                    SequenceManager.Instance.CompleteStep(1);
                     SetProtectionState(true);
                 }
                 else if (isProtecting && distanceToHead > protectionDistance)
@@ -380,24 +425,25 @@ namespace FireEvacuation
                 {
                     if (!hasRagGrabbed)
                     {
-                        ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(1); // 문 탈출 순서 오류
+                        if (isPracticeMode) ShowSubtitle("먼저 천을 집어주세요!");
+                        SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasRagWetted)
                     {
-                        ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
                     if (!hasProtectionActivated)
                     {
-                        ShowSubtitle("먼저 호흡 보호를 위해 젖은 천을 입에 대세요!");
+                        if (isPracticeMode) ShowSubtitle("먼저 호흡 보호를 위해 젖은 천을 입에 대세요!");
                         SequenceManager.Instance.RecordSequenceError(1);
                         return;
                     }
+                    if (DoorArrow != null) DoorArrow.SetActive(false);
                     hasReachedFrontDoor = true;
-                    SequenceManager.Instance.CompleteStep(2); // 문 탈출 완료
+                    SequenceManager.Instance.CompleteStep(2);
                     StartCoroutine(FrontDoorSequence());
                 }
             }
@@ -409,7 +455,7 @@ namespace FireEvacuation
                 {
                     if (!hasReachedFrontDoor)
                     {
-                        ShowSubtitle("먼저 문 손잡이의 온도를 확인하고 문을 열어야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 문 손잡이의 온도를 확인하고 문을 열어야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(2);
                         return;
                     }
@@ -421,7 +467,7 @@ namespace FireEvacuation
 
         void ShowSubtitle(string message)
         {
-            if (subtitleText != null)
+            if (subtitleText != null && isPracticeMode)
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
@@ -429,12 +475,14 @@ namespace FireEvacuation
             }
             else
             {
-                //Debug.LogWarning("subtitleText가 null입니다!");
+                //Debug.LogWarning("subtitleText가 null이거나 평가 모드입니다!");
             }
         }
 
         IEnumerator FlashingSubtitle(string text, float flashSpeed = 0.5f)
         {
+            if (!isPracticeMode) yield break;
+
             float timer = 0f;
             float duration = textDelay;
             bool isVisible = true;
@@ -463,6 +511,18 @@ namespace FireEvacuation
             }
         }
 
+        void TriggerHapticFeedback()
+        {
+            if (leftHandController != null)
+            {
+                leftHandController.SendHapticImpulse(vibrationIntensity, vibrationDuration);
+            }
+            if (rightHandController != null)
+            {
+                rightHandController.SendHapticImpulse(vibrationIntensity, vibrationDuration);
+            }
+        }
+
         IEnumerator EnableVignetteEffect()
         {
             if (vignette == null) yield break;
@@ -470,7 +530,7 @@ namespace FireEvacuation
             float duration = 1.5f;
             float timer = 0f;
             float start = vignette.intensity.value;
-            float target = 0.45f;
+            float target = 0.70f;
 
             vignette.active = true;
 
@@ -487,58 +547,134 @@ namespace FireEvacuation
 
         IEnumerator FrontDoorSequence()
         {
-            ShowSubtitle("대피 시 문을 열기 전 손잡이의 온도를 먼저 확인해야 합니다!");
-            yield return new WaitForSeconds(textDelay);
-
-            ShowSubtitle("문 손잡이가 뜨거우면 반대편에 불이 있을 수 있으니, 다른 경로로 대피해야 합니다.");
-            yield return new WaitForSeconds(textDelay);
-
-            ShowSubtitle("이번 훈련은 안전한 상황을 전제로 진행됩니다. 문을 열고 탈출하세요!");
-            yield return new WaitForSeconds(textDelay);
-
-            if (doorGrabInteractable != null)
+            if (isPracticeMode)
             {
-                doorGrabInteractable.enabled = true;
-                //Debug.Log("✅ 문 상호작용 활성화.");
+                ShowSubtitle("대피 시 문을 열기 전 손잡이의 온도를 먼저 확인해야 합니다!");
+                yield return new WaitForSeconds(textDelay);
+
+                ShowSubtitle("문 손잡이가 뜨거우면 반대편에 불이 있을 수 있으니, 다른 경로로 대피해야 합니다.");
+                yield return new WaitForSeconds(textDelay);
+
+                ShowSubtitle("맨 손으로 온도를 확인하는 것은 위험합니다! 젖은 천을 이용해서 확인해봅시다.");
+                if (outlineDoorHandleObject != null && isPracticeMode) AddOutline(outlineDoorHandleObject);
+                yield return new WaitForSeconds(textDelay);
+            }
+
+            isHandleTouched = false;
+            handleTouchTime = 0f;
+
+            while (!isHandleTouched)
+            {
+                if (IsRagTouchingHandle())
+                {
+                    if (handleTouchTime == 0f)
+                    {
+                        if (isPracticeMode) ShowSubtitle("손잡이에 천이 닿았습니다. 온도를 확인하는 중입니다...");
+                    }
+
+                    handleTouchTime += Time.deltaTime;
+                    TriggerHapticFeedback();
+
+                    if (handleTouchTime >= requiredTouchTime)
+                    {
+                        isHandleSafe = true;
+                        isHandleTouched = true;
+                        if (outlineDoorObject != null) RemoveOutline(outlineDoorObject);
+                        if (outlineDoorHandleObject != null) RemoveOutline(outlineDoorHandleObject);
+                        if (isPracticeMode) ShowSubtitle("문 손잡이가 뜨겁지 않은 것으로 보아 안전합니다. 문을 열고 탈출하세요!");
+
+                        if (doorRb != null)
+                        {
+                            doorRb.isKinematic = false;
+                        }
+                    }
+                }
+                else
+                {
+                    if (handleTouchTime > 0f)
+                    {
+                        if (isPracticeMode) ShowSubtitle("손잡이에서 천이 떨어졌습니다. 다시 시도하세요.");
+                    }
+
+                    handleTouchTime = 0f;
+                }
+
+                yield return null;
+            }
+
+            if (doorRb != null)
+            {
+                doorRb.isKinematic = false;
             }
         }
 
         IEnumerator BackDoorSequence()
         {
-            ShowSubtitle("잘했습니다! 방을 나왔습니다!");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                ShowSubtitle("잘했습니다! 방을 나왔습니다!");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("이제 안전하게 건물 밖으로 대피하는 법을 배워봅시다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("이제 안전하게 건물 밖으로 대피하는 법을 배워봅시다.");
+                yield return new WaitForSeconds(textDelay);
+                if (NextSectionArrow != null) NextSectionArrow.SetActive(true);
+            }
         }
 
         IEnumerator WetRagSequence()
         {
             hasRagWetted = true;
-            if (cubeRenderer != null)
-            {
-                cubeRenderer.material.color = Color.green;
-            }
             //Debug.Log("천이 젖음. hasRagWetted: true");
-            ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
-            yield return new WaitForSeconds(textDelay);
-            ShowSubtitle("이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
+            if (isPracticeMode)
+            {
+                if (WaterArrow1 != null) WaterArrow1.SetActive(false);
+                if (WaterArrow2 != null) WaterArrow2.SetActive(false);
+                ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
+                yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
+            }
         }
 
-        void HighlightWater()
+        void AddOutline(GameObject target)
         {
-            foreach (GameObject waterObject in waterObjects)
+            if (target == null || !isPracticeMode) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline == null)
             {
-                if (waterObject != null)
-                {
-                    Renderer waterRenderer = waterObject.GetComponent<Renderer>();
-                    if (waterRenderer != null)
-                    {
-                        waterRenderer.material.color = Color.yellow;
-                    }
-                }
+                outline = target.AddComponent<Outline>();
             }
-            ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
+
+            outline.OutlineMode = Outline.Mode.OutlineAll;
+            outline.OutlineColor = outlineColor;
+            outline.OutlineWidth = outlineWidth;
+            outline.enabled = true;
+        }
+
+        void RemoveOutline(GameObject target)
+        {
+            if (target == null) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
+
+            // 화살표 비활성화
+            if (WaterArrow1 != null) WaterArrow1.SetActive(false);
+            if (WaterArrow2 != null) WaterArrow2.SetActive(false);
+        }
+
+        void AddOutlineToWater()
+        {
+            if (isPracticeMode)
+            {
+                ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
+                // 화살표 활성화
+                WaterArrow1.SetActive(true);
+                WaterArrow2.SetActive(true);
+            }
         }
 
         void SetProtectionState(bool state)
@@ -553,14 +689,14 @@ namespace FireEvacuation
             {
                 if (!hasShownProtectionMessage)
                 {
-                    ShowSubtitle("잘했어요! 이제 유독가스로부터 호흡기를 보호할 수 있습니다!");
+                    if (isPracticeMode) ShowSubtitle("잘했어요! 이제 유독가스로부터 호흡기를 보호할 수 있습니다!");
                     hasShownProtectionMessage = true;
                 }
                 if (!hasProtectionActivated)
                 {
                     onProtectionActivated?.Invoke();
                     hasProtectionActivated = true;
-                    StartCoroutine(ShowNextSubtitleAfterDelay());
+                    if (isPracticeMode) StartCoroutine(ShowNextSubtitleAfterDelay());
                 }
                 if (vignette != null)
                 {
@@ -579,7 +715,22 @@ namespace FireEvacuation
         private IEnumerator ShowNextSubtitleAfterDelay()
         {
             yield return new WaitForSeconds(5f);
-            ShowSubtitle("다음은 탈출을 위해 출입문을 찾아봅시다!");
+            if (isPracticeMode)
+            {
+                ShowSubtitle("다음은 탈출을 위해 출입문을 찾아봅시다!");
+                if (DoorArrow != null) DoorArrow.SetActive(true);
+                if (outlineDoorObject != null) AddOutline(outlineDoorObject);
+            }
+        }
+
+        private bool IsRagTouchingHandle()
+        {
+            if (ragObject == null || (doorHandle1 == null && doorHandle2 == null)) return false;
+            Collider ragCollider = ragObject.GetComponent<Collider>();
+            if (ragCollider == null) return false;
+
+            return (doorHandle1 != null && ragCollider.bounds.Intersects(doorHandle1.bounds)) ||
+                   (doorHandle2 != null && ragCollider.bounds.Intersects(doorHandle2.bounds));
         }
 
         public void SetWaterSearchTime(float time)
@@ -588,5 +739,4 @@ namespace FireEvacuation
             searchTimer = waterSearchTime;
         }
     }
-
 }

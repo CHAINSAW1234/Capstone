@@ -13,6 +13,23 @@ namespace FireEvacuation
 
     public class Section2 : MonoBehaviour
     {
+        [Header("모드 설정")]
+        [SerializeField] private bool isPracticeMode = true; // Inspector에서 연습/평가 모드 토글
+
+        [Header("아웃라인 설정")]
+        public Color outlineColor = Color.green; // 아웃라인 색상 (기본값: 빨간색)
+        public float outlineWidth = 2f; // 아웃라인 두께
+        public GameObject outlineEvacuationMap; // 아웃라인 적용할 안내도 오브젝트
+        public GameObject outlineFireAlarmButton; // 아웃라인 적용할 화재 경보 버튼 오브젝트
+        public GameObject outlineEmergencyDoor; // 아웃라인 적용할 비상문 오브젝트
+
+        [Header("화살표 설정")]
+        public GameObject BeforeSectionArrow; // 첫 번째 화살표 오브젝트
+        public GameObject SmokeArriveArrow; // 두 번째 화살표 오브젝트
+        public GameObject EmergencyArrow; // 두 번째 화살표 오브젝트
+        public GameObject EndArrow; // 두 번째 화살표 오브젝트
+        public GameObject ButtonArrow; // 버튼 오브젝트
+
         [Header("UI 설정")]
         public TMP_Text subtitleText;
         public float textDelay = 5f;
@@ -48,6 +65,8 @@ namespace FireEvacuation
         private bool isInsideCrawlingTrigger = false;
 
         private GameObject emergencyDoor;
+
+        [Header("비상문 설정")]
         public GameObject doorTrigger;
         public GameObject exitTrigger;
         private float pushForce = 10f;
@@ -72,7 +91,7 @@ namespace FireEvacuation
 
         private Rigidbody doorRb;
         private HingeJoint hingeJoint;
-        private BoxCollider doorTriggerCollider; // Moved declaration up here
+        private BoxCollider doorTriggerCollider;
         private bool isDoorEnabled = false;
         private bool isDoorOpening = false;
 
@@ -84,6 +103,7 @@ namespace FireEvacuation
         private bool hasReachedEmergencyDoor = false;
         private bool hasCompletedEvacuation = false;
 
+        [Header("이벤트 설정")]
         [SerializeField] public UnityEvent onFireAlarmActivated;
         [SerializeField] public UnityEvent onCrawlingStarted;
         [SerializeField] public UnityEvent onEmergencyDoorOpened;
@@ -97,12 +117,27 @@ namespace FireEvacuation
             SetupEmergencyDoor();
             SetupStartTrigger();
 
+            // 화살표 초기 비활성화
+            if (BeforeSectionArrow != null) BeforeSectionArrow.SetActive(false);
+            if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(false);
+            if (EmergencyArrow != null) EmergencyArrow.SetActive(false);
+            if (EndArrow != null) EndArrow.SetActive(false);
+            if (ButtonArrow != null) ButtonArrow.SetActive(false);
+
             if (headTransform == null)
             {
                 headTransform = Camera.main?.transform;
                 if (headTransform == null)
                 {
                     //Debug.LogError("Head Transform (Main Camera)을 찾을 수 없습니다!");
+                }
+            }
+
+            if (!isPracticeMode)
+            {
+                if (subtitleText != null)
+                {
+                    subtitleText.gameObject.SetActive(false);
                 }
             }
         }
@@ -279,7 +314,6 @@ namespace FireEvacuation
             limits.contactDistance = 0f;
             hingeJoint.limits = limits;
 
-            // Use the class field doorTriggerCollider
             doorTriggerCollider = emergencyDoor.GetComponent<BoxCollider>();
             if (doorTriggerCollider == null)
             {
@@ -331,19 +365,19 @@ namespace FireEvacuation
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
+                        if (isPracticeMode) ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
                         SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(5))
                     {
-                        ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
@@ -361,6 +395,7 @@ namespace FireEvacuation
                 Vector3 pushDirection = -emergencyDoor.transform.right;
                 doorRb.AddForceAtPosition(pushForce * pushDirection, emergencyDoor.transform.position, ForceMode.Impulse);
                 onEmergencyDoorOpened?.Invoke();
+                if (outlineEmergencyDoor != null) RemoveOutline(outlineEmergencyDoor);
                 //Debug.Log("✅ 문이 손으로 밀려 열림.");
             }
         }
@@ -369,17 +404,19 @@ namespace FireEvacuation
         {
             if (!SequenceManager.Instance.IsStepCompleted(3))
             {
-                ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                 SequenceManager.Instance.RecordSequenceError(3);
                 return;
             }
             isButtonPressed = true;
+            if (isPracticeMode) AddOutline(outlineFireAlarmButton);
         }
 
         void OnButtonHoverExit(HoverExitEventArgs args)
         {
             isButtonPressed = false;
             isButtonTriggerActivated = false;
+            if (isPracticeMode) RemoveOutline(outlineFireAlarmButton);
         }
 
         void Update()
@@ -421,7 +458,7 @@ namespace FireEvacuation
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
@@ -429,13 +466,15 @@ namespace FireEvacuation
                     isButtonTriggerActivated = true;
                     hasActivatedAlarm = true;
                     SequenceManager.Instance.CompleteStep(4);
-                    ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동해봅시다!");
+                    if (outlineFireAlarmButton != null) RemoveOutline(outlineFireAlarmButton);
+                    if (isPracticeMode) ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동해봅시다!");
+                    if (ButtonArrow != null) ButtonArrow.SetActive(false);
 
                     if (playSoundOnButtonPress)
                     {
                         if (SoundManager.Instance == null)
                         {
-                           // Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
+                            //Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
                             return;
                         }
                         try
@@ -444,7 +483,7 @@ namespace FireEvacuation
                         }
                         catch (System.Exception e)
                         {
-                           // Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
+                            //Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
                         }
                     }
                 }
@@ -472,13 +511,13 @@ namespace FireEvacuation
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
+                        if (isPracticeMode) ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
                         SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
@@ -494,14 +533,19 @@ namespace FireEvacuation
                 {
                     if (!hasEnteredSmokeArea)
                     {
-                        ShowSubtitle("먼저 연기 구역에 들어가 포복으로 이동해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 연기 구역에 들어가 포복으로 이동해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
                     hasCrawled = true;
                     onCrawlingStarted?.Invoke();
                     SequenceManager.Instance.CompleteStep(5);
-                    ShowSubtitle("잘했어요! 포복을 완료했습니다. 이제 비상문으로 이동해봅시다!");
+                    if (isPracticeMode)
+                    {
+                        ShowSubtitle("잘했어요! 포복을 완료했습니다. 이제 비상문으로 이동해봅시다!");
+                        if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(false);
+                        if (EmergencyArrow != null) EmergencyArrow.SetActive(true);
+                    }
                 }
             }
 
@@ -512,19 +556,19 @@ namespace FireEvacuation
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(3))
                     {
-                        ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(3);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
-                        ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
+                        if (isPracticeMode) ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
                         SequenceManager.Instance.RecordSequenceError(4);
                         return;
                     }
                     if (!SequenceManager.Instance.IsStepCompleted(5))
                     {
-                        ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 연기 구역에서 포복으로 이동해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(5);
                         return;
                     }
@@ -541,12 +585,16 @@ namespace FireEvacuation
                 {
                     if (!hasReachedEmergencyDoor)
                     {
-                        ShowSubtitle("먼저 비상문을 열고 통과해야 합니다!");
+                        if (isPracticeMode) ShowSubtitle("먼저 비상문을 열고 통과해야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(6);
                         return;
                     }
                     hasCompletedEvacuation = true;
-                    ShowSubtitle("축하합니다 모든 화재 대피 훈련이 완료되었습니다!");
+                    if (isPracticeMode)
+                    {
+                        ShowSubtitle("축하합니다 모든 화재 대피 훈련이 완료되었습니다! 이제 밖으로 대피하여 훈련을 완료하세요.");
+                        if (EndArrow != null) EndArrow.SetActive(true);
+                    }
                     onEmergencyDoorOpened?.Invoke();
                 }
             }
@@ -554,23 +602,34 @@ namespace FireEvacuation
 
         IEnumerator EvacuationSequence()
         {
-            ShowSubtitle("건물 밖으로 대피 시 대피 경로를 파악하는 것이 가장 중요합니다.");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                ShowSubtitle("건물 밖으로 대피 시 대피 경로를 파악하는 것이 가장 중요합니다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("먼저 앞에 있는 탈출 경로 안내도를 확인하여 대피 경로를 파악하세요.");
-            HighlightEvacuationMap();
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("먼저 앞에 있는 탈출 경로 안내도를 확인하여 대피 경로를 파악하세요.");
+                AddOutlineToEvacuationMap();
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("안내도를 확인한 후, 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("안내도를 확인한 후, 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
+                if (ButtonArrow != null) ButtonArrow.SetActive(true);
+                yield return new WaitForSeconds(textDelay);
+            }
+            else
+            {
+                AddOutlineToEvacuationMap();
+            }
         }
 
         IEnumerator ElevatorSequence()
         {
-            ShowSubtitle("화재 대피 시 엘리베이터 사용은 전원 차단의 위험이 있습니다.");
-            yield return new WaitForSeconds(textDelay);
-            ShowSubtitle("엘리베이터 대신 가까운 비상 계단으로 이동하세요.");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                ShowSubtitle("화재 대피 시 엘리베이터 사용은 전원 차단의 위험이 있습니다.");
+                yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("엘리베이터 대신 가까운 비상 계단으로 이동하세요.");
+                yield return new WaitForSeconds(textDelay);
+            }
         }
 
         IEnumerator SmokeSequence()
@@ -586,12 +645,10 @@ namespace FireEvacuation
                 }
             }
 
-            // 🔥 [추가] 연기 발생 사운드 재생
             if (SoundManager.Instance != null)
             {
                 try
                 {
-                    // 원하는 사운드 그룹과 클립 번호를 설정 (예시로 1, 0 사용)
                     SoundManager.Instance.PlayOneShot(1, 0);
                 }
                 catch (System.Exception e)
@@ -604,66 +661,97 @@ namespace FireEvacuation
                 //Debug.LogError("SoundManager.Instance is null! 연기 사운드 재생 실패.");
             }
 
-            ShowSubtitle("화재로 인해 주변에 연기가 가득해졌습니다.");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                ShowSubtitle("화재로 인해 주변에 연기가 가득해졌습니다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("화재로 발생한 연기는 독성이 있어 오래 노출되면 위험합니다!");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("화재로 발생한 연기는 독성이 있어 오래 노출되면 위험합니다!");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 이동해야합니다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 다음 위치까지 이동 해봅시다.");
+                yield return new WaitForSeconds(textDelay);
+                if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(true);
+            }
         }
-
 
         IEnumerator EmergencyDoorSequence()
         {
-            ShowSubtitle("비상문에 도착했습니다! 다음은 비상문 통과에 대해 배워봅시다.");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                if (EmergencyArrow != null) EmergencyArrow.SetActive(false);
+                ShowSubtitle("비상문에 도착했습니다! 다음은 비상문 통과에 대해 배워봅시다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("실제 화재 상황에서는 비상문을 막다른 길로 오해해 위험에 처하는 경우가 많습니다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("실제 화재 상황에서는 비상문을 막다른 길로 오해해 위험에 처하는 경우가 많습니다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("비상문에 도착하면 '비상문'이라는 글을 찾아 문의 위치를 확인해야합니다.");
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("비상문에 도착하면 '비상문'이라는 글을 찾아 문의 위치를 확인해야합니다.");
+                yield return new WaitForSeconds(textDelay);
 
-            ShowSubtitle("해당 문의 한 쪽을 미는 것 만으로 가볍게 문이 열립니다. 한 번 열어봅시다.");
-            HighlightEmergencyDoor();
-            isDoorEnabled = true;
-            yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("해당 문의 한 쪽을 미는 것 만으로 가볍게 문이 열립니다. 한 번 열어봅시다.");
+                AddOutlineToEmergencyDoor();
+                isDoorEnabled = true;
+                yield return new WaitForSeconds(textDelay);
+            }
+            else
+            {
+                isDoorEnabled = true;
+                AddOutlineToEmergencyDoor();
+            }
         }
 
         void ShowSubtitle(string message)
         {
-            if (subtitleText != null)
+            if (subtitleText != null && isPracticeMode)
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
             }
         }
 
-        void HighlightEvacuationMap()
+        void AddOutline(GameObject target)
         {
-            if (evacuationMap != null && !hasHighlightedMap)
+            if (target == null || !isPracticeMode) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline == null)
             {
-                Renderer mapRenderer = evacuationMap.GetComponent<Renderer>();
-                if (mapRenderer != null)
-                {
-                    mapRenderer.material.color = Color.yellow;
-                    hasHighlightedMap = true;
-                    SequenceManager.Instance.CompleteStep(3);
-                }
+                outline = target.AddComponent<Outline>();
+            }
+
+            outline.OutlineMode = Outline.Mode.OutlineAll;
+            outline.OutlineColor = outlineColor;
+            outline.OutlineWidth = outlineWidth;
+            outline.enabled = true;
+        }
+
+        void RemoveOutline(GameObject target)
+        {
+            if (target == null) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
             }
         }
 
-        void HighlightEmergencyDoor()
+        void AddOutlineToEvacuationMap()
         {
-            if (emergencyDoor != null)
+            if (outlineEvacuationMap != null && !hasHighlightedMap)
             {
-                Renderer doorRenderer = emergencyDoor.GetComponent<Renderer>();
-                if (doorRenderer != null)
-                {
-                    doorRenderer.material.color = Color.green;
-                }
+                AddOutline(outlineEvacuationMap);
+                hasHighlightedMap = true;
+                SequenceManager.Instance.CompleteStep(3);
+            }
+        }
+
+        void AddOutlineToEmergencyDoor()
+        {
+            if (outlineEmergencyDoor != null)
+            {
+                AddOutline(outlineEmergencyDoor);
             }
         }
 

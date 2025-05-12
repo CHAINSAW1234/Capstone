@@ -18,6 +18,9 @@ namespace FireEvacuation
         [Header("타이머 설정")]
         [SerializeField] private TimeManager timeManager; // TimeManager 참조
 
+        [Header("화살표")]
+        public GameObject arrowObject1; // 첫 번째 화살표 오브젝트
+
         [Header("트리거 설정")]
         [SerializeField] private GameObject triggerObject; // 트리거 오브젝트
         [SerializeField] private string triggerTag = "Player"; // 트리거 태그
@@ -33,6 +36,7 @@ namespace FireEvacuation
         private void Start()
         {
             InitializeUI();
+            if (arrowObject1 != null) arrowObject1.SetActive(false);
         }
 
         private void InitializeUI()
