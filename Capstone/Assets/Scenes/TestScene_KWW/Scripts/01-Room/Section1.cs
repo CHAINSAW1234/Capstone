@@ -33,6 +33,9 @@ namespace FireEvacuation
         [Header("UI 설정")]
         public TMP_Text subtitleText; // 자막 텍스트 UI
         public float textDelay = 5f; // 자막 표시 지연 시간 (초)
+        public TMP_Text FeedbackAlarm;
+        public TMP_Text FeedbackProtection;
+        public TMP_Text FeedbackDoor;
 
         [Header("사운드 설정")]
         public int sirenGroupIndex = 0; // 사운드 그룹 인덱스
@@ -272,15 +275,19 @@ namespace FireEvacuation
             {
                 ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
                 yield return new WaitForSeconds(textDelay);
-
+  
                 ShowSubtitle("이 훈련은 아파트 화재 상황에서 안전한 대피 방법을 익히는 과정입니다.");
                 yield return new WaitForSeconds(textDelay);
 
                 ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
                 yield return new WaitForSeconds(textDelay);
             }
+            else
+            {
+                yield return new WaitForSeconds(textDelay*2);
+            }
 
-            int maxRetries = 50;
+                int maxRetries = 50;
             int retries = 0;
             while (SoundManager.Instance == null && retries < maxRetries)
             {
@@ -333,8 +340,9 @@ namespace FireEvacuation
         {
             if (!hasFireRecognized)
             {
-                if (isPracticeMode) ShowSubtitle("첫째로 화재 상황을 인지해야 합니다!");
+                if (isPracticeMode) ShowSubtitle("먼저 화재 상황을 인지해야 합니다!");
                 SequenceManager.Instance.RecordSequenceError(0);
+                RecordFeedback(FeedbackAlarm, "화재 상황을 충분히 인지하지 않았습니다.");
                 return;
             }
 
@@ -394,12 +402,14 @@ namespace FireEvacuation
                     {
                         if (isPracticeMode) ShowSubtitle("먼저 천을 집어주세요!");
                         SequenceManager.Instance.RecordSequenceError(1);
+                        RecordFeedback(FeedbackProtection, "호흡 보호 과정에서 절차가 틀렸습니다.(천 짚기)");
                         return;
                     }
                     if (!hasRagWetted)
                     {
                         if (isPracticeMode) ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(1);
+                        RecordFeedback(FeedbackProtection, "호흡 보호 과정에서 절차가 틀렸습니다.(물 적시기)");
                         return;
                     }
                     SequenceManager.Instance.CompleteStep(1);
@@ -423,22 +433,11 @@ namespace FireEvacuation
                 Collider frontTriggerCollider = frontDoorTrigger.GetComponent<Collider>();
                 if (frontTriggerCollider != null && frontTriggerCollider.bounds.Contains(headTransform.position))
                 {
-                    if (!hasRagGrabbed)
-                    {
-                        if (isPracticeMode) ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(1);
-                        return;
-                    }
-                    if (!hasRagWetted)
-                    {
-                        if (isPracticeMode) ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(1);
-                        return;
-                    }
                     if (!hasProtectionActivated)
                     {
                         if (isPracticeMode) ShowSubtitle("먼저 호흡 보호를 위해 젖은 천을 입에 대세요!");
                         SequenceManager.Instance.RecordSequenceError(1);
+                        RecordFeedback(FeedbackProtection, "호흡 보호 절차를 생략했습니다.");
                         return;
                     }
                     if (DoorArrow != null) DoorArrow.SetActive(false);
@@ -457,6 +456,7 @@ namespace FireEvacuation
                     {
                         if (isPracticeMode) ShowSubtitle("먼저 문 손잡이의 온도를 확인하고 문을 열어야 합니다!");
                         SequenceManager.Instance.RecordSequenceError(2);
+                        RecordFeedback(FeedbackDoor, "문 손잡이의 온도를 확인하지 않았습니다.");
                         return;
                     }
                     hasReachedBackDoor = true;
@@ -737,6 +737,11 @@ namespace FireEvacuation
         {
             waterSearchTime = time;
             searchTimer = waterSearchTime;
+        }
+
+        void RecordFeedback(TMP_Text feedbackText, string message)
+        {
+            feedbackText.text = message;
         }
     }
 }
