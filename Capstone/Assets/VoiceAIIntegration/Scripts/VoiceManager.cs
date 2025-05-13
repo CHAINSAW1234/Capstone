@@ -40,7 +40,6 @@ public class VoiceManager : MonoBehaviour
             rightHandDevice = rightHandDevices[0];
         }
 
-        SetUIState(true); // 초기 상태는 previous UI
     }
 
     private void Update()

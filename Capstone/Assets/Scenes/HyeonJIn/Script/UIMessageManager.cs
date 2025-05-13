@@ -1,159 +1,378 @@
 using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.XR.Interaction.Toolkit;
+using FireEvacuation;
+using UnityEngine.UI;
 
-public class UIMessageManager : MonoBehaviour
+namespace FireEvacuation
 {
-    [Header("UI ¼³Á¤")]
-    [SerializeField]
-    private TMP_Text subtitleText; // ÀÚ¸· ÅØ½ºÆ® UI
-
-    [Header("°¢ ÄÄÆ÷³ÍÆ® ¼±ÅÃ")]
-    [SerializeField]
-    private FireExtinguisherController fireExtinguisher;
-    [SerializeField]
-    private NozzleController nozzle;
-    [SerializeField]
-    private GameObject fire;
-    [SerializeField]
-    private PinController pin;
-
-    private const float textDelay = 5f;
-    enum STATE { Start, PinOff, Targeting, Shot, Finish};
-    private STATE state = STATE.Start;
-
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
+    public class UIMessageManager : MonoBehaviour
     {
-        StartCoroutine(SequenceTargeting());
-    }
+        [Header("UI ì„¤ì •")]
+        [SerializeField] private TMP_Text subtitleText; // ìë§‰ í…ìŠ¤íŠ¸ UI
+        [SerializeField] private GameObject endUI; // í›ˆë ¨ ì¢…ë£Œ UI
+        [SerializeField] private GameObject previousUI; // ë¹„í™œì„±í™”í•  ì´ì „ UI
+        [SerializeField] private RawImage stepImages;
+        [SerializeField] private Texture2D incorrectTextures;
+        [SerializeField] private TMP_Text FeedbackText; // í…ìŠ¤íŠ¸ ìœ„ì¹˜
 
-    // Update is called once per frame
-    void Update()
-    {
-    }
+        [Header("ê° ì»´í¬ë„ŒíŠ¸ ì„ íƒ")]
+        [SerializeField] private FireExtinguisherController fireExtinguisher;
+        [SerializeField] private GameObject extinguisherObject; // ì†Œí™”ê¸° ì˜¤ë¸Œì íŠ¸
+        [SerializeField] private NozzleController nozzle;
+        [SerializeField] private GameObject fire;
+        [SerializeField] private PinController pin;
 
-    void SendString(string message)
-    {
-        if (NullCheck.Invoke(subtitleText))
+        [Header("ì•„ì›ƒë¼ì¸ ì„¤ì •")]
+        [SerializeField] private Color outlineColor = Color.red; // ì•„ì›ƒë¼ì¸ ìƒ‰ìƒ
+        [SerializeField] private float outlineWidth = 2f; // ì•„ì›ƒë¼ì¸ ë‘ê»˜
+        [SerializeField] private GameObject outlineExtinguisherObject; // ì†Œí™”ê¸° ì•„ì›ƒë¼ì¸ìš© ì˜¤ë¸Œì íŠ¸
+        [SerializeField] private GameObject outlinePinObject; // í•€ ì•„ì›ƒë¼ì¸ìš© ì˜¤ë¸Œì íŠ¸
+        [SerializeField] private GameObject outlineNozzleObject; // í•€ ì•„ì›ƒë¼ì¸ìš© ì˜¤ë¸Œì íŠ¸
+
+        [Header("í™”ì‚´í‘œ ì„¤ì •")]
+        [SerializeField] private GameObject extinguisherArrow; // ì†Œí™”ê¸° ì§‘ê¸°ìš© í™”ì‚´í‘œ
+        [SerializeField] private GameObject fireArrow; // í™”ì¬ ì§„ì••ìš© í™”ì‚´í‘œ
+
+        [Header("ì»¨íŠ¸ë¡¤ëŸ¬ ì „í™˜ ì„¤ì •")]
+        [SerializeField] private GameObject[] previousControllers; // ì´ì „ ì»¨íŠ¸ë¡¤ëŸ¬ë“¤
+        [SerializeField] private GameObject[] newControllers; // ì „í™˜í•  ì»¨íŠ¸ë¡¤ëŸ¬ë“¤
+
+        private const float textDelay = 5f;
+        private enum STATE { Start, PickUp, PinOff, Targeting, Shot, Finish }
+        private STATE state = STATE.Start;
+        private bool isPracticeMode = true;
+        private Mode currentMode;
+
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable extinguisherGrabInteractable; // ì†Œí™”ê¸° grab ìƒíƒœ ê´€ë¦¬
+        private bool hasExtinguisherGrabbed = false; // ì†Œí™”ê¸° ì¡íŒ ìƒíƒœ ì¶”ì 
+
+        public enum Mode { Study = 0, Evaluation = 1, NULL };
+
+        void Awake()
         {
-            subtitleText.color = Color.black;
-            subtitleText.text = message;
-            Debug.Log($"ÀÚ¸· Ç¥½Ã: {message}");
+            SetMode();
         }
-    }
 
-    void NextState()
-    {
-        state = state + 1;
-        StartCoroutine("Sequence" + state.GetType().GetEnumName(state));
-    }
-    IEnumerator SequenceStart()
-    {
-        SendString("¼ÒÈ­±â »ç¿ë ÈÆ·Ã¿¡ ¿À½Å °ÍÀ» È¯¿µÇÕ´Ï´Ù!");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("ÀÌ ÈÆ·ÃÀº È­Àç »óÈ²¿¡¼­ ¼ÒÈ­±â »ç¿ë ¹æ¹ıÀ» ÀÍÈ÷´Â °úÁ¤ÀÔ´Ï´Ù.");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("´Ü°èº°·Î µû¶ó¿Í¼­ ¼ÒÈ­±â »ç¿ë¹ıÀ» ÀÍÇôº¸¼¼¿ä!");
-        yield return new WaitForSeconds(textDelay);
-
-        NextState();
-        yield break;
-    }
-
-    IEnumerator SequencePinOff()
-    {
-        SendString("¼ÒÈ­±â »ç¿ëÀº ÃÑ ³× ´Ü°è·Î ³ª´©¾î Áı´Ï´Ù.");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("¿ì¼± ¼ÒÈ­±â ÇÉÀ» »Ì¾Æº¾½Ã´Ù.");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("¿Ş¼ÕÀ¸·Î ¼ÒÈ­±â ¼ÕÀâÀÌ¸¦ Àâ°í ¿À¸¥¼ÕÀ¸·Î ÇÉÀ» Àâ¾Æ¼­ »Ì¾Æº¸¼¼¿ä!");
-        yield return new WaitForSeconds(textDelay);
-
-        while(true)
+        void Start()
         {
-            if (!fireExtinguisher.IsPinOff && fireExtinguisher.TrySpray())
+            endUI.SetActive(false);
+
+            if (extinguisherArrow != null) extinguisherArrow.SetActive(false);
+            if (fireArrow != null) fireArrow.SetActive(false);
+
+            if (!isPracticeMode)
             {
-                SendString("¾ÆÁ÷ ÇÉÀ» »ÌÁö ¾Ê¾Ò¾î¿ä!");
+                if (subtitleText != null) subtitleText.gameObject.SetActive(false);
+            }
+
+            extinguisherGrabInteractable = extinguisherObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+            if (extinguisherGrabInteractable == null)
+            {
+                extinguisherGrabInteractable = extinguisherObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+                Debug.LogWarning("ì†Œí™”ê¸° ì˜¤ë¸Œì íŠ¸ì— XRGrabInteractable ì»´í¬ë„ŒíŠ¸ë¥¼ ì¶”ê°€í–ˆìŠµë‹ˆë‹¤.");
+            }
+            extinguisherGrabInteractable.selectEntered.AddListener(OnExtinguisherGrabbed);
+
+            StartCoroutine(SequenceStart());
+        }
+
+        void SetMode()
+        {
+            int modeValue = PlayerPrefs.GetInt("mode", (int)Mode.NULL);
+            currentMode = (Mode)modeValue;
+
+            if (currentMode == Mode.Study)
+            {
+                isPracticeMode = true;
+            }
+            else if (currentMode == Mode.Evaluation)
+            {
+                isPracticeMode = false;
+            }
+            else
+            {
+                Debug.Log("ëª¨ë“œê°€ ì„¤ì •ë˜ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤.");
+            }
+        }
+
+        void OnExtinguisherGrabbed(SelectEnterEventArgs args)
+        {
+            if (!hasExtinguisherGrabbed)
+            {
+                hasExtinguisherGrabbed = true;
+            }
+        }
+
+        void SendString(string message)
+        {
+            if (NullCheck.Invoke(subtitleText) && isPracticeMode)
+            {
+                subtitleText.color = Color.black;
+                subtitleText.text = message;
+                Debug.Log($"ìë§‰ í‘œì‹œ: {message}");
+            }
+        }
+
+        void NextState()
+        {
+            state = (STATE)((int)state + 1);
+            StartCoroutine("Sequence" + state.ToString());
+        }
+
+        IEnumerator SequenceStart()
+        {
+            if (isPracticeMode)
+            {
+                SendString("ì†Œí™”ê¸° ì‚¬ìš© í›ˆë ¨ì— ì˜¤ì‹  ê²ƒì„ í™˜ì˜í•©ë‹ˆë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+
+                SendString("ì´ í›ˆë ¨ì€ í™”ì¬ ìƒí™©ì—ì„œ ì†Œí™”ê¸° ì‚¬ìš© ë°©ë²•ì„ ìµíˆëŠ” ê³¼ì •ì…ë‹ˆë‹¤.");
+                yield return new WaitForSeconds(textDelay);
+
+                SendString("ë‹¨ê³„ë³„ë¡œ ë”°ë¼ì™€ì„œ ì†Œí™”ê¸° ì‚¬ìš©ë²•ì„ ìµí˜€ë´…ì‹œë‹¤!");
                 yield return new WaitForSeconds(textDelay);
             }
 
-            if(fireExtinguisher.IsPinOff)
-            {
-                SendString("ÇÉÀ» »Ì¾Ò¾î¿ä!");
-                yield return new WaitForSeconds(textDelay);
-                NextState();
-                yield break;
-            }
-
-            yield return null;
+            NextState();
+            yield break;
         }
 
-    }
-    IEnumerator SequenceTargeting()
-    {
-        SendString("´ÙÀ½ ´Ü°è´Â ³ëÁñÀ» Àâ°í ºÒÂÊÀ» Á¶ÁØÇÏ´Â°Å¿¡¿ä");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("¿À¸¥¼ÕÀ¸·Î ³ëÁñÀ» Àâ°í ºÒÂÊÀ» Á¶ÁØÇÏ¼¼¿ä!");
-        yield return new WaitForSeconds(textDelay);
-
-        while (true)
+        IEnumerator SequencePickUp()
         {
-            if (!nozzle.IsGrabbed && fireExtinguisher.TrySpray())
+            if (isPracticeMode)
             {
-                SendString("³ëÁñÀ» Àâ¾Æ¾ßµÇ¿ä!");
+                SendString("ë¨¼ì € ì†Œí™”ê¸°ë¥¼ ë“¤ì–´ì•¼ í•©ë‹ˆë‹¤! ì™¼ì†ìœ¼ë¡œ ì¡ì•„ ë“¤ì–´ ì˜¬ë ¤ ë´…ì‹œë‹¤!");
+                if (outlineExtinguisherObject != null) AddOutline(outlineExtinguisherObject);
+                if (extinguisherArrow != null) extinguisherArrow.SetActive(true);
                 yield return new WaitForSeconds(textDelay);
             }
 
-            if (nozzle.IsGrabbed && CheckTargeting())
+            while (true)
             {
-                SendString("Á¶ÁØÀÌ ¿Ï·áµÆ¾î¿ä!");
-                yield return new WaitForSeconds(textDelay / 2);
-                NextState();
-                yield break;
+                if (!hasExtinguisherGrabbed && (pin != null && fireExtinguisher.TrySpray()))
+                {
+                    SequenceManagerEx.Instance.RecordSequenceError(0);
+                    if (isPracticeMode)
+                    {
+                        SendString("ì†Œí™”ê¸°ë¥¼ ë¨¼ì € ë“¤ì–´ì•¼ í•©ë‹ˆë‹¤!");
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    yield return null;
+                }
+                else if (hasExtinguisherGrabbed)
+                {
+                    SequenceManagerEx.Instance.CompleteStep(0);
+                    if (isPracticeMode)
+                    {
+                        SendString("ì†Œí™”ê¸°ë¥¼ ë“¤ì—ˆìŠµë‹ˆë‹¤!");
+                        if (outlineExtinguisherObject != null) RemoveOutline(outlineExtinguisherObject);
+                        if (extinguisherArrow != null) extinguisherArrow.SetActive(false);
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    yield return null;
+                    NextState();
+                    yield break;
+                }
+                yield return null;
             }
-
-            yield return null;
         }
 
-    }
-
-    bool CheckTargeting()
-    {
-        Vector3 nozzlePosition = nozzle.transform.position;
-        Vector3 firePosition = fire.transform.position;
-
-        Vector3 look = (firePosition - nozzlePosition).normalized;
-        Vector3 fireLook = nozzle.transform.up.normalized;
-
-        float dot = Vector3.Dot(fireLook, look);
-        float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
-
-        return angle < 30f;
-    }
-
-    IEnumerator SequenceShot()
-    {
-        SendString("¸¶Áö¸·À¸·Î ºĞ»ç¸¦ ÅëÇØ ºÒÀ» ²ô¸é µÇ¿ä");
-        yield return new WaitForSeconds(textDelay);
-
-        SendString("¼ÒÈ­±â¸¦ ÀâÀº¼ÕÀÇ ¹öÆ°À» ´­·¯¼­ ¼ÒÈ­±â¸¦ ºĞ»çÇÏ¼¼¿ä!");
-        yield return new WaitForSeconds(textDelay);
-
-        if(!fire.activeSelf)
+        IEnumerator SequencePinOff()
         {
-            SendString("È­Á¦¸¦ Áø¾ĞÇß¾î¿ä!");
-            yield return new WaitForSeconds(textDelay);
+            if (isPracticeMode)
+            {
+                SendString("ë‹¤ìŒìœ¼ë¡œ ì†Œí™”ê¸° í•€ì„ ë½‘ì•„ë´…ì‹œë‹¤.");
+                if (outlinePinObject != null) AddOutline(outlinePinObject);
+                yield return new WaitForSeconds(textDelay);
 
-            SendString("ÀÌ»óÀ¸·Î ¼ÒÈ­±â »ç¿ë ÈÆ·ÃÀ» Á¾·áÇÏ°Ú½À´Ï´Ù!");
-            yield return new WaitForSeconds(textDelay);
+                SendString("ì˜¤ë¥¸ì†ìœ¼ë¡œ ë‹¤ìŒ í•€ì„ ì¡ì•„ì„œ ë½‘ì•„ë´…ì‹œë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+            }
+
+            while (true)
+            {
+                if (pin != null && !fireExtinguisher.IsPinOff && fireExtinguisher.TrySpray())
+                {
+                    SequenceManagerEx.Instance.RecordSequenceError(1);
+                    if (isPracticeMode)
+                    {
+                        SendString("ì•„ì§ í•€ì„ ë½‘ì§€ ì•Šì•˜ìŠµë‹ˆë‹¤!");
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    FeedbackText.text = "í•€ ë½‘ê¸°ë¥¼ ìƒëµí–ˆìŠµë‹ˆë‹¤.";
+                    stepImages.texture = incorrectTextures;
+                    yield return null;
+                }
+                else if (pin != null && fireExtinguisher.IsPinOff)
+                {
+                    SequenceManagerEx.Instance.CompleteStep(1);
+                    if (isPracticeMode)
+                    {
+                        SendString("í•€ì„ ë½‘ì•˜ìŠµë‹ˆë‹¤!");
+                        if (outlinePinObject != null) RemoveOutline(outlinePinObject);
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    yield return null;
+                    NextState();
+                    yield break;
+                }
+                yield return null;
+            }
+        }
+
+        IEnumerator SequenceTargeting()
+        {
+            if (!isPracticeMode)
+            {
+                SendString("ë‹¤ìŒ ì†Œí™”ê¸°ë¥¼ ë¶„ì‚¬í•˜ëŠ” ë°©ë²•ì— ëŒ€í•´ ì•Œì•„ë´…ì‹œë‹¤.");
+                yield return new WaitForSeconds(textDelay);
+
+                SendString("ì˜¤ë¥¸ì†ìœ¼ë¡œ ë…¸ì¦ì„ ì¡ì•„ ë½‘ì€ ë’¤ ë¶ˆìª½ì„ í–¥í•´ ì¡°ì¤€í•´ë´…ì‹œë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+            }
+
+            while (true)
+            {
+                if (!nozzle.IsGrabbed && (pin != null && fireExtinguisher.TrySpray()))
+                {
+                    SequenceManagerEx.Instance.RecordSequenceError(2);
+                    if (isPracticeMode)
+                    {
+                        SendString("ë…¸ì¦ì„ ì¡ì•„ì•¼ í•©ë‹ˆë‹¤!");
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                }
+                else if (nozzle.IsGrabbed && CheckTargeting())
+                {
+                    SequenceManagerEx.Instance.CompleteStep(2);
+                    if (isPracticeMode)
+                    {
+                        SendString("ì†Œí™”ê¸° ë¶„ì‚¬ ì¤€ë¹„ê°€ ì™„ë£ŒëìŠµë‹ˆë‹¤!");
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    NextState();
+                    yield break;
+                }
+                yield return null;
+            }
+        }
+
+        IEnumerator SequenceShot()
+        {
+            if (isPracticeMode)
+            {
+                SendString("ë§ˆì§€ë§‰ìœ¼ë¡œ ì†Œí™”ê¸° ë¶„ì‚¬ë¥¼ í†µí•´ ë¶ˆì„ ë„ë©´ ë©ë‹ˆë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+
+                if (fireArrow != null) fireArrow.SetActive(true);
+
+                SendString("ì†Œí™”ê¸°ë¥¼ ì¡ì€ ì™¼ ì†ì˜ ë²„íŠ¼ì„ ëˆŒëŸ¬ì„œ ì†Œí™”ê¸°ë¥¼ ë¶„ì‚¬í•´ë´…ì‹œë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+            }
+        
+
+            while (true)
+            {
+                if (fire.activeSelf)
+                {
+                    if (!nozzle.IsGrabbed || (pin != null && !fireExtinguisher.IsPinOff))
+                    {
+                        SequenceManagerEx.Instance.RecordSequenceError(3);
+                        if (isPracticeMode)
+                        {
+                            SendString("ë…¸ì¦ì„ ì¡ê³  í•€ì´ ë½‘íŒ ìƒíƒœì—ì„œ ë¶„ì‚¬í•´ì•¼ í•©ë‹ˆë‹¤!");
+                        }
+                    }
+                    else
+                    {
+                        if (isPracticeMode)
+                        {
+                            SendString("í™”ì¬ê°€ ì§„ì••ë˜ê³  ìˆìŠµë‹ˆë‹¤. ê³„ì† ë¶„ì‚¬í•´ì„œ ë¶ˆì„ êº¼ì£¼ì„¸ìš”!");
+                            yield return new WaitForSeconds(textDelay);
+                        }
+                    }
+                    yield return null ;
+                }
+                else
+                {
+                    if (isPracticeMode)
+                    {
+                        SendString("í™”ì¬ë¥¼ ì§„ì••í–ˆìŠµë‹ˆë‹¤!");
+                        SequenceManagerEx.Instance.CompleteStep(3);
+                        if (fireArrow != null) fireArrow.SetActive(false);
+                        yield return new WaitForSeconds(textDelay);
+                    }
+                    NextState();
+                    yield break;
+                }
+                yield return null;
+            }
+        }
+
+        IEnumerator SequenceFinish()
+        {
+            if (isPracticeMode)
+            {
+                SendString("í›ˆë ¨ì´ ì™„ë£Œë˜ì—ˆìŠµë‹ˆë‹¤! ìˆ˜ê³ í•˜ì…¨ìŠµë‹ˆë‹¤!");
+                yield return new WaitForSeconds(textDelay);
+            }
+
+            previousUI.SetActive(false);
+            endUI.SetActive(true);
+
+            foreach (var controller in previousControllers)
+            {
+                if (controller != null) controller.SetActive(false);
+            }
+            foreach (var controller in newControllers)
+            {
+                if (controller != null) controller.SetActive(true);
+            }
 
             yield break;
+        }
+
+        bool CheckTargeting()
+        {
+            Vector3 nozzlePosition = nozzle.transform.position;
+            Vector3 firePosition = fire.transform.position;
+
+            Vector3 look = (firePosition - nozzlePosition).normalized;
+            Vector3 fireLook = nozzle.transform.up.normalized;
+
+            float dot = Vector3.Dot(fireLook, look);
+            float angle = Mathf.Acos(dot) * Mathf.Rad2Deg;
+
+            return angle < 30f;
+        }
+
+        void AddOutline(GameObject target)
+        {
+            if (target == null || !isPracticeMode) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline == null)
+            {
+                outline = target.AddComponent<Outline>();
+            }
+
+            outline.OutlineMode = Outline.Mode.OutlineAll;
+            outline.OutlineColor = outlineColor;
+            outline.OutlineWidth = outlineWidth;
+            outline.enabled = true;
+        }
+
+        void RemoveOutline(GameObject target)
+        {
+            if (target == null) return;
+
+            Outline outline = target.GetComponent<Outline>();
+            if (outline != null)
+            {
+                outline.enabled = false;
+            }
         }
     }
 }

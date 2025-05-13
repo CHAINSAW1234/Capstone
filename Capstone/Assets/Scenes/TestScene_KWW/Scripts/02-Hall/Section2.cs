@@ -13,8 +13,9 @@ namespace FireEvacuation
 
     public class Section2 : MonoBehaviour
     {
-        [Header("모드 설정")]
-        [SerializeField] private bool isPracticeMode = true; // Inspector에서 연습/평가 모드 토글
+        public enum Mode { Study = 0, Evaluation = 1, NULL };
+        private Mode currentMode;
+        private bool isPracticeMode = true;
 
         [Header("아웃라인 설정")]
         public Color outlineColor = Color.green; // 아웃라인 색상 (기본값: 빨간색)
@@ -119,6 +120,7 @@ namespace FireEvacuation
 
         private void Start()
         {
+            SetMode();
             SetupButton();
             InitPostProcessing();
             SetupEvacuationMap();
@@ -149,6 +151,27 @@ namespace FireEvacuation
                 {
                     subtitleText.gameObject.SetActive(false);
                 }
+            }
+        }
+
+        void SetMode()
+        {
+            // PlayerPrefs에서 mode 값을 직접 읽어옴
+            int modeValue = PlayerPrefs.GetInt("mode", (int)Mode.NULL); // 기본값은 NULL
+            currentMode = (Mode)modeValue;
+
+            // 모드에 따라 다른 동작 수행
+            if (currentMode == Mode.Study)
+            {
+                isPracticeMode = true;
+            }
+            else if (currentMode == Mode.Evaluation)
+            {
+                isPracticeMode = false;
+            }
+            else
+            {
+                Debug.Log("모드가 설정되지 않았습니다.");
             }
         }
 
