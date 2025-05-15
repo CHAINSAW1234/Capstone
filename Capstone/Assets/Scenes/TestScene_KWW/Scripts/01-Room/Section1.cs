@@ -8,117 +8,83 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace FireEvacuation
 {
-#pragma warning disable 0618 // XRBaseController에 대한 폐지 경고 억제
-
     public class Section1 : MonoBehaviour
     {
         public enum Mode { Study = 0, Evaluation = 1, NULL };
         private Mode currentMode;
         private bool isPracticeMode = true;
 
-        [Header("아웃라인 설정")]
-        public Color outlineColor = Color.red; // 아웃라인 색상 (기본값: 빨간색)
-        public float outlineWidth = 2f; // 아웃라인 두께
-        public GameObject outlineRagObject; // 아웃라인 적용할 Rag 오브젝트
-        public GameObject[] outlineWaterObjects = new GameObject[2]; // 아웃라인 적용할 Water 오브젝트 배열 (2개)
-        public GameObject outlineDoorObject; // 아웃라인 적용할 문 오브젝트
-        public GameObject outlineDoorHandleObject; // 아웃라인 적용할 문 오브젝트
+        [Header("설정")]
+        [SerializeField] private float textDelay = 5f;
+        [SerializeField] private float protectionDistance = 0.2f;
+        [SerializeField] private float requiredTouchTime = 3f;
 
-        [Header("화살표 설정")]
-        public GameObject WaterArrow1; // 첫 번째 화살표 오브젝트
-        public GameObject WaterArrow2; // 두 번째 화살표 오브젝트
-        public GameObject DoorArrow; // 두 번째 화살표 오브젝트
-        public GameObject NextSectionArrow; // 두 번째 화살표 오브젝트
+        [Header("오브젝트")]
+        [SerializeField] private GameObject ragObject;
+        [SerializeField] private GameObject[] waterObjects = new GameObject[2];
+        [SerializeField] private GameObject doorObject;
+        [SerializeField] private Collider doorHandle1;
+        [SerializeField] private Collider doorHandle2;
+        [SerializeField] private GameObject frontDoorTrigger;
+        [SerializeField] private GameObject backDoorTrigger;
+        [SerializeField] private Transform headTransform;
 
-        [Header("UI 설정")]
-        public TMP_Text subtitleText; // 자막 텍스트 UI
-        public float textDelay = 5f; // 자막 표시 지연 시간 (초)
-        public TMP_Text FeedbackAlarm;
-        public TMP_Text FeedbackProtection;
-        public TMP_Text FeedbackDoor;
+        [Header("UI")]
+        [SerializeField] private TMP_Text subtitleText;
+        [SerializeField] private TMP_Text FeedbackAlarm;
+        [SerializeField] private TMP_Text FeedbackProtection;
+        [SerializeField] private TMP_Text FeedbackDoor;
 
-        [Header("사운드 설정")]
-        public int sirenGroupIndex = 0; // 사운드 그룹 인덱스
-        public int sirenClipIndex = 0; // 재생할 클립 인덱스
+        [Header("화살표")]
+        [SerializeField] private GameObject WaterArrow1;
+        [SerializeField] private GameObject WaterArrow2;
+        [SerializeField] private GameObject DoorArrow;
+        [SerializeField] private GameObject NextSectionArrow;
 
-        [Header("후처리 효과")]
-        public Volume globalVolume; // 전역 볼륨 (후처리 효과)
-        private Vignette vignette; // 비네트 효과
+        [Header("아웃라인")]
+        [SerializeField] private GameObject outlineRagObject;
+        [SerializeField] private GameObject outlineDoorObject;
+        [SerializeField] private GameObject outlineDoorHandleObject;
+        [SerializeField] private Color outlineColor = Color.red;
+        [SerializeField] private float outlineWidth = 2f;
 
-        [Header("Rag 설정")]
-        public GameObject ragObject; // Rag 오브젝트
-        public GameObject[] waterObjects = new GameObject[2]; // Water 오브젝트 배열 (2개)
-        public Transform headTransform; // XR Rig의 Main Camera
-        public float protectionDistance = 0.2f; // 머리와의 보호 감지 거리
+        [Header("후처리")]
+        [SerializeField] private Volume globalVolume;
 
-        [Header("문 설정")]
-        public GameObject doorObject; // 문 오브젝트
-        public Collider doorHandle1; // 문 손잡이 1
-        public Collider doorHandle2; // 문 손잡이 2
-        public GameObject frontDoorTrigger; // 문 앞 트리거
-        public GameObject backDoorTrigger; // 문 반대편 트리거
+        [Header("햅틱")]
+        [SerializeField] private XRBaseController leftHandController;
+        [SerializeField] private XRBaseController rightHandController;
+        [SerializeField] private float vibrationIntensity = 0.8f;
+        [SerializeField] private float vibrationDuration = 0.1f;
 
-        [Header("타이머 설정")]
-        public float waterSearchTime = 15f; // 물 찾기 시간
-        private float searchTimer = 0f;
-        private bool isSearchingForWater = false;
-        private float wetTimeRequired = 5f; // 헝겊을 적시는 데 필요한 시간
-        private float wetTimer = 0f;
-        private bool isWetting = false;
 
-        [Header("이벤트 설정")]
-        [SerializeField] public UnityEvent onProtectionActivated;
-        [SerializeField] public UnityEvent onProtectionDeactivated;
-
-        // Rag 관련 변수
-        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable grabInteractable;
-        private Renderer cubeRenderer;
-        private bool isProtecting = false;
-
-        // 문 관련 변수
+        private Vignette vignette;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable ragGrabInteractable;
+        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorGrabInteractable;
         private Rigidbody doorRb;
         private HingeJoint hingeJoint;
-        private UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable doorGrabInteractable;
+        private Renderer ragRenderer;
 
-        // 시나리오 진행 상태
-        private bool hasFireRecognized = false;
-        private bool hasRagGrabbed = false;
-        private static bool hasRagWetted = false;
-        private bool hasProtectionActivated = false;
-        private bool hasShownProtectionMessage = false;
-        private bool hasReachedFrontDoor = false;
-        private bool hasReachedBackDoor = false;
-
-        private bool isHandleTouched = false;
-        private float handleTouchTime = 0f;
-        private float requiredTouchTime = 3f; // 온도 확인에 필요한 최소 접촉 시간
-        private bool isHandleSafe = false;
-
-        [Header("Haptic 설정")]
-        public XRBaseController leftHandController;
-        public XRBaseController rightHandController;
-        public float vibrationIntensity = 0.5f;
-        public float vibrationDuration = 0.1f;
+        private bool hasFireRecognized;
+        private bool hasRagGrabbed;
+        private static bool hasRagWetted;
+        private bool hasProtectionActivated;
+        private bool hasReachedFrontDoor;
+        private bool hasReachedBackDoor;
+        private bool isSearchingForWater;
+        private bool isWetting;
+        private bool isProtecting;
+        private bool isHandleTouched;
+        private bool isHandleSafe;
+        private float searchTimer;
+        private float wetTimer;
+        private float handleTouchTime;
 
         private void Start()
         {
             hasRagWetted = false;
             SetMode();
-            InitializeRag();
-            InitPostProcessing();
-            SetupDoor();
-
-            // 화살표 초기 비활성화
-            if (WaterArrow1 != null) WaterArrow1.SetActive(false);
-            if (WaterArrow2 != null) WaterArrow2.SetActive(false);
-            if (DoorArrow != null) DoorArrow.SetActive(false);
-            if (NextSectionArrow != null) NextSectionArrow.SetActive(false);
-
-            if (!isPracticeMode && subtitleText != null)
-            {
-                subtitleText.gameObject.SetActive(false);
-            }
-
+            InitializeComponents();
             StartCoroutine(DrillSequence());
         }
 
@@ -143,100 +109,59 @@ namespace FireEvacuation
             }
         }
 
-        void InitializeRag()
+        private void InitializeComponents()
         {
-            if (ragObject == null)
+            // 천 초기화
+            if (ragObject)
             {
-                return;
-            }
+                ragGrabInteractable = ragObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>() ?? ragObject.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
+                ragGrabInteractable.selectEntered.AddListener(OnRagGrabbed);
 
-            grabInteractable = ragObject.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRGrabInteractable>();
-            if (grabInteractable == null)
-            {
-                //Debug.LogError("Rag 오브젝트에 XRGrabInteractable 컴포넌트가 없습니다!");
-            }
-            else
-            {
-                grabInteractable.selectEntered.AddListener(OnRagGrabbed);
-            }
-
-            cubeRenderer = ragObject.GetComponent<Renderer>();
-            if (cubeRenderer == null)
-            {
-                //Debug.LogError("Rag 오브젝트에 Renderer 컴포넌트가 없습니다!");
-            }
-            else
-            {
-                cubeRenderer.material = new Material(cubeRenderer.material);
-                cubeRenderer.material.color = Color.red;
-            }
-
-            Collider ragCollider = ragObject.GetComponent<Collider>();
-            if (ragCollider == null)
-            {
-                ragCollider = ragObject.AddComponent<BoxCollider>();
-                //Debug.LogWarning("Rag 오브젝트에 콜라이더가 없어 추가했습니다.");
-            }
-
-            Rigidbody ragRb = ragObject.GetComponent<Rigidbody>();
-            if (ragRb == null)
-            {
-                ragRb = ragObject.AddComponent<Rigidbody>();
-                ragRb.useGravity = true;
-                ragRb.isKinematic = false;
-                ragRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-                //Debug.LogWarning("Rag 오브젝트에 Rigidbody가 없어 추가했습니다.");
-            }
-
-            for (int i = 0; i < waterObjects.Length; i++)
-            {
-                if (waterObjects[i] == null)
+                ragRenderer = ragObject.GetComponent<Renderer>();
+                if (ragRenderer)
                 {
-                    //Debug.LogError($"Water 오브젝트 {i}가 지정되지 않았습니다!");
-                    continue;
+                    ragRenderer.material = new Material(ragRenderer.material) { color = Color.red };
                 }
 
-                Collider waterCollider = waterObjects[i].GetComponent<Collider>();
-                if (waterCollider == null)
+                if (!ragObject.GetComponent<Collider>()) ragObject.AddComponent<BoxCollider>();
+                if (!ragObject.GetComponent<Rigidbody>())
                 {
-                    waterCollider = waterObjects[i].AddComponent<BoxCollider>();
-                    waterCollider.isTrigger = true;
-                    //Debug.LogWarning($"Water 오브젝트 {i}에 콜라이더가 없어 추가했습니다.");
-                }
-                else if (!waterCollider.isTrigger)
-                {
-                    waterCollider.isTrigger = true;
-                    //Debug.LogWarning($"Water 오브젝트 {i}의 콜라이더가 트리거로 설정되지 않았습니다. 트리거로 설정했습니다.");
-                }
-
-                if (!waterObjects[i].CompareTag("Water"))
-                {
-                    //Debug.LogWarning($"Water 오브젝트 {i}에 'Water' 태그가 없습니다. 태그를 추가합니다.");
-                    waterObjects[i].tag = "Water";
+                    var rb = ragObject.AddComponent<Rigidbody>();
+                    rb.useGravity = true;
+                    rb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
                 }
             }
 
-            if (headTransform == null)
+            // 물 오브젝트 초기화
+            foreach (var water in waterObjects)
             {
-                headTransform = GameObject.Find("Main Camera")?.transform;
-                if (headTransform == null)
-                {
-                    //Debug.LogError("Main Camera를 찾을 수 없습니다! Inspector에서 Head Transform을 수동으로 지정해주세요.");
-                }
+                if (!water) continue;
+                var collider = water.GetComponent<Collider>() ?? water.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
+                water.tag = "Water";
             }
-        }
 
-        void InitPostProcessing()
-        {
-            if (globalVolume != null && globalVolume.profile.TryGet(out vignette))
+            // 문 초기화
+            SetupDoor();
+
+            // 후처리 초기화
+            if (globalVolume && globalVolume.profile.TryGet(out vignette))
             {
                 vignette.active = false;
                 vignette.intensity.Override(0f);
             }
-            else
-            {
-                //Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
-            }
+
+            // 화살표 초기화
+            WaterArrow1?.SetActive(false);
+            WaterArrow2?.SetActive(false);
+            DoorArrow?.SetActive(false);
+            NextSectionArrow?.SetActive(false);
+
+            // UI 초기화
+            if (!isPracticeMode && subtitleText) subtitleText.gameObject.SetActive(false);
+
+            // 헤드 트랜스폼 초기화
+            headTransform ??= GameObject.Find("Main Camera")?.transform;
         }
 
         void SetupDoor()
@@ -291,74 +216,45 @@ namespace FireEvacuation
             //Debug.Log("✅ 문 설정 완료.");
         }
 
-        IEnumerator DrillSequence()
+        private IEnumerator DrillSequence()
         {
             if (isPracticeMode)
             {
                 ShowSubtitle("화재 대피 훈련에 오신 것을 환영합니다!");
                 yield return new WaitForSeconds(textDelay);
-  
                 ShowSubtitle("이 훈련은 아파트 화재 상황에서 안전한 대피 방법을 익히는 과정입니다.");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("단계별로 따라오며 안전한 대피 방법을 익혀보세요!");
                 yield return new WaitForSeconds(textDelay);
             }
             else
             {
-                yield return new WaitForSeconds(textDelay*2);
+                yield return new WaitForSeconds(textDelay * 2);
             }
 
-                int maxRetries = 50;
-            int retries = 0;
-            while (SoundManager.Instance == null && retries < maxRetries)
+            // 사이렌 재생
+            if (SoundManager.Instance)
             {
-                //Debug.LogWarning("SoundManager.Instance is null. Waiting for initialization...");
-                yield return new WaitForSeconds(0.1f);
-                retries++;
-            }
-
-            if (SoundManager.Instance == null)
-            {
-                //Debug.LogError("SoundManager.Instance is still null after waiting. Cannot play siren sound.");
-                yield break;
-            }
-
-            try
-            {
-                SoundManager.Instance.PlayOneShot(sirenGroupIndex, sirenClipIndex);
-                //Debug.Log($"사이렌 사운드 재생 시도: Group Index {sirenGroupIndex}, Clip Index {sirenClipIndex}");
-            }
-            catch (System.Exception e)
-            {
-                //Debug.LogError("사이렌 사운드 재생 중 오류 발생: " + e.Message);
+                SoundManager.Instance.PlayOneShot(0, 0);
             }
 
             yield return EnableVignetteEffect();
 
             if (isPracticeMode)
             {
-                yield return FlashingSubtitle("건물에 화재가 발생했습니다!", 0.6f);
+                ShowSubtitle("건물에 화재가 발생했습니다!");
+                yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("화재 발생 시, 호흡기를 보호하는 것이 중요합니다.");
+                yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("호흡 보호에 사용할 천을 찾아보세요!");
+                if (outlineRagObject) AddOutline(outlineRagObject);
             }
+
             hasFireRecognized = true;
             SequenceManager.Instance.CompleteStep(0);
-
-            if (isPracticeMode)
-            {
-                ShowSubtitle("화재 발생 시, 가장 먼저 젖은 옷이나 수건 등의 천으로 호흡기를 보호하는 것이 중요합니다.");
-                yield return new WaitForSeconds(textDelay);
-
-                ShowSubtitle("주변에서 호흡 보호에 사용할 천을 찾아보세요!");
-                if (outlineRagObject != null && isPracticeMode) AddOutline(outlineRagObject);
-                yield return new WaitForSeconds(textDelay);
-            }
-            else
-            {
-                if (outlineRagObject != null) AddOutline(outlineRagObject);
-            }
         }
 
-        void OnRagGrabbed(UnityEngine.XR.Interaction.Toolkit.SelectEnterEventArgs args)
+        private void OnRagGrabbed(SelectEnterEventArgs args)
         {
             if (!hasFireRecognized)
             {
@@ -371,42 +267,28 @@ namespace FireEvacuation
             if (!hasRagGrabbed)
             {
                 hasRagGrabbed = true;
-                if (outlineRagObject != null) RemoveOutline(outlineRagObject);
-                if (isPracticeMode) ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
-                isSearchingForWater = true;
-                searchTimer = waterSearchTime;
-                //Debug.Log("천을 집었습니다. hasRagGrabbed: " + hasRagGrabbed);
+                if (outlineRagObject) RemoveOutline(outlineRagObject);
+                StartCoroutine(WaterSequence());
             }
         }
 
-        void Update()
+        private void Update()
         {
-            if (isSearchingForWater)
-            {
-                searchTimer -= Time.deltaTime;
-                if (searchTimer <= 0)
-                {
-                    if (isPracticeMode) AddOutlineToWater();
-                    isSearchingForWater = false;
-                }
-            }
 
-            if (!hasRagWetted && hasRagGrabbed && ragObject != null)
+            if (!hasRagWetted && hasRagGrabbed && ragObject)
             {
-                Collider ragCollider = ragObject.GetComponent<Collider>();
-                if (ragCollider != null)
+                var ragCollider = ragObject.GetComponent<Collider>();
+                if (ragCollider)
                 {
-                    foreach (GameObject waterObject in waterObjects)
+                    foreach (var water in waterObjects)
                     {
-                        if (waterObject == null) continue;
-                        Collider waterCollider = waterObject.GetComponent<Collider>();
-                        if (waterCollider != null && ragCollider.bounds.Intersects(waterCollider.bounds))
+                        if (!water) continue;
+                        var waterCollider = water.GetComponent<Collider>();
+                        if (waterCollider && ragCollider.bounds.Intersects(waterCollider.bounds))
                         {
                             if (!isWetting)
                             {
-                                isSearchingForWater = false;
                                 isWetting = true;
-                                wetTimer = 0f;
                                 StartCoroutine(WetRagSequence());
                             }
                             break;
@@ -415,18 +297,11 @@ namespace FireEvacuation
                 }
             }
 
-            if (headTransform != null && ragObject != null)
+            if (headTransform && ragObject)
             {
                 float distanceToHead = Vector3.Distance(ragObject.transform.position, headTransform.position);
                 if (!isProtecting && distanceToHead <= protectionDistance)
                 {
-                    if (!hasRagGrabbed)
-                    {
-                        if (isPracticeMode) ShowSubtitle("먼저 천을 집어주세요!");
-                        SequenceManager.Instance.RecordSequenceError(1);
-                        RecordFeedback(FeedbackProtection, "호흡 보호 과정에서 절차가 틀렸습니다.(천 짚기)");
-                        return;
-                    }
                     if (!hasRagWetted)
                     {
                         if (isPracticeMode) ShowSubtitle("먼저 천을 물에 적셔야 합니다!");
@@ -446,14 +321,14 @@ namespace FireEvacuation
             CheckTriggerCollision();
         }
 
-        void CheckTriggerCollision()
+        private void CheckTriggerCollision()
         {
-            if (headTransform == null) return;
+            if (!headTransform) return;
 
             if (!hasReachedFrontDoor)
             {
-                Collider frontTriggerCollider = frontDoorTrigger.GetComponent<Collider>();
-                if (frontTriggerCollider != null && frontTriggerCollider.bounds.Contains(headTransform.position))
+                var frontTriggerCollider = frontDoorTrigger.GetComponent<Collider>();
+                if (frontTriggerCollider && frontTriggerCollider.bounds.Contains(headTransform.position))
                 {
                     if (!hasProtectionActivated)
                     {
@@ -462,7 +337,7 @@ namespace FireEvacuation
                         RecordFeedback(FeedbackProtection, "호흡 보호 절차를 생략했습니다.");
                         return;
                     }
-                    if (DoorArrow != null) DoorArrow.SetActive(false);
+                    if (DoorArrow) DoorArrow.SetActive(false);
                     hasReachedFrontDoor = true;
                     SequenceManager.Instance.CompleteStep(2);
                     StartCoroutine(FrontDoorSequence());
@@ -471,8 +346,8 @@ namespace FireEvacuation
 
             if (!hasReachedBackDoor)
             {
-                Collider backTriggerCollider = backDoorTrigger.GetComponent<Collider>();
-                if (backTriggerCollider != null && backTriggerCollider.bounds.Contains(headTransform.position))
+                var backTriggerCollider = backDoorTrigger.GetComponent<Collider>();
+                if (backTriggerCollider && backTriggerCollider.bounds.Contains(headTransform.position))
                 {
                     if (!hasReachedFrontDoor)
                     {
@@ -487,71 +362,27 @@ namespace FireEvacuation
             }
         }
 
-        void ShowSubtitle(string message)
+        private void ShowSubtitle(string message)
         {
-            if (subtitleText != null && isPracticeMode)
+            if (subtitleText && isPracticeMode)
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
-                //Debug.Log($"자막 표시: {message}");
-            }
-            else
-            {
-                //Debug.LogWarning("subtitleText가 null이거나 평가 모드입니다!");
             }
         }
 
-        IEnumerator FlashingSubtitle(string text, float flashSpeed = 0.5f)
+        private void TriggerHapticFeedback()
         {
-            if (!isPracticeMode) yield break;
-
-            float timer = 0f;
-            float duration = textDelay;
-            bool isVisible = true;
-
-            if (subtitleText != null)
-            {
-                subtitleText.text = text;
-            }
-
-            while (timer < duration)
-            {
-                isVisible = !isVisible;
-                if (subtitleText != null)
-                {
-                    subtitleText.color = isVisible ? Color.red : new Color(1f, 0.4f, 0.4f);
-                }
-
-                timer += flashSpeed;
-                yield return new WaitForSeconds(flashSpeed);
-            }
-
-            if (subtitleText != null)
-            {
-                subtitleText.color = Color.black;
-                subtitleText.text = text;
-            }
+            leftHandController?.SendHapticImpulse(vibrationIntensity, vibrationDuration);
+            rightHandController?.SendHapticImpulse(vibrationIntensity, vibrationDuration);
         }
 
-        void TriggerHapticFeedback()
+        private IEnumerator EnableVignetteEffect()
         {
-            if (leftHandController != null)
-            {
-                leftHandController.SendHapticImpulse(vibrationIntensity, vibrationDuration);
-            }
-            if (rightHandController != null)
-            {
-                rightHandController.SendHapticImpulse(vibrationIntensity, vibrationDuration);
-            }
-        }
-
-        IEnumerator EnableVignetteEffect()
-        {
-            if (vignette == null) yield break;
+            if (!vignette) yield break;
 
             float duration = 1.5f;
             float timer = 0f;
-            float start = vignette.intensity.value;
             float target = 0.70f;
 
             vignette.active = true;
@@ -559,26 +390,22 @@ namespace FireEvacuation
             while (timer < duration)
             {
                 timer += Time.deltaTime;
-                float t = timer / duration;
-                vignette.intensity.value = Mathf.Lerp(start, target, t);
+                vignette.intensity.value = Mathf.Lerp(0f, target, timer / duration);
                 yield return null;
             }
 
             vignette.intensity.Override(target);
         }
 
-        IEnumerator FrontDoorSequence()
+        private IEnumerator FrontDoorSequence()
         {
             if (isPracticeMode)
             {
-                ShowSubtitle("대피 시 문을 열기 전 손잡이의 온도를 먼저 확인해야 합니다!");
-                yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("문 손잡이가 뜨거우면 반대편에 불이 있을 수 있으니, 다른 경로로 대피해야 합니다.");
                 yield return new WaitForSeconds(textDelay);
 
                 ShowSubtitle("맨 손으로 온도를 확인하는 것은 위험합니다! 젖은 천을 이용해서 확인해봅시다.");
-                if (outlineDoorHandleObject != null && isPracticeMode) AddOutline(outlineDoorHandleObject);
+                if (outlineDoorHandleObject) AddOutline(outlineDoorHandleObject);
                 yield return new WaitForSeconds(textDelay);
             }
 
@@ -623,147 +450,113 @@ namespace FireEvacuation
 
                 yield return null;
             }
+        }
 
-            if (doorRb != null)
+        private IEnumerator WaterSequence()
+        {
+            if (isPracticeMode)
             {
-                doorRb.isKinematic = false;
+                ShowSubtitle("잘했습니다! 이제 천을 물에 적셔야 합니다!");
+                yield return new WaitForSeconds(textDelay);
+                ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
+                WaterArrow1?.SetActive(true);
+                WaterArrow2?.SetActive(true);
+                yield return new WaitForSeconds(textDelay);
             }
         }
 
-        IEnumerator BackDoorSequence()
+        private IEnumerator BackDoorSequence()
         {
             if (isPracticeMode)
             {
                 ShowSubtitle("잘했습니다! 방을 나왔습니다!");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("이제 안전하게 건물 밖으로 대피하는 법을 배워봅시다.");
-                yield return new WaitForSeconds(textDelay);
-                if (NextSectionArrow != null) NextSectionArrow.SetActive(true);
+                if (NextSectionArrow) NextSectionArrow.SetActive(true);
             }
         }
 
-        IEnumerator WetRagSequence()
+        private IEnumerator WetRagSequence()
         {
             hasRagWetted = true;
-            //Debug.Log("천이 젖음. hasRagWetted: true");
             if (isPracticeMode)
             {
-                if (WaterArrow1 != null) WaterArrow1.SetActive(false);
-                if (WaterArrow2 != null) WaterArrow2.SetActive(false);
+                if (WaterArrow1) WaterArrow1.SetActive(false);
+                if (WaterArrow2) WaterArrow2.SetActive(false);
                 ShowSubtitle("잘했습니다! 충분히 천을 물에 적셔주세요!");
                 yield return new WaitForSeconds(textDelay);
                 ShowSubtitle("이제 젖은 천을 호흡기에 갖다 대어 호흡을 보호합시다!");
             }
         }
 
-        void AddOutline(GameObject target)
+        private void AddOutline(GameObject target)
         {
-            if (target == null || !isPracticeMode) return;
+            if (!target || !isPracticeMode) return;
 
-            Outline outline = target.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = target.AddComponent<Outline>();
-            }
-
+            var outline = target.GetComponent<Outline>() ?? target.AddComponent<Outline>();
             outline.OutlineMode = Outline.Mode.OutlineAll;
             outline.OutlineColor = outlineColor;
             outline.OutlineWidth = outlineWidth;
             outline.enabled = true;
         }
 
-        void RemoveOutline(GameObject target)
+        private void RemoveOutline(GameObject target)
         {
-            if (target == null) return;
-
-            Outline outline = target.GetComponent<Outline>();
-            if (outline != null)
+            if (!target) return;
+            if (target.TryGetComponent<Outline>(out var outline))
             {
                 outline.enabled = false;
             }
-
-            // 화살표 비활성화
-            if (WaterArrow1 != null) WaterArrow1.SetActive(false);
-            if (WaterArrow2 != null) WaterArrow2.SetActive(false);
         }
 
-        void AddOutlineToWater()
+        private void SetProtectionState(bool state)
         {
-            if (isPracticeMode)
-            {
-                ShowSubtitle("물이 있는 곳을 찾아 천을 적셔봅시다!");
-                // 화살표 활성화
-                WaterArrow1.SetActive(true);
-                WaterArrow2.SetActive(true);
-            }
-        }
-
-        void SetProtectionState(bool state)
-        {
-            if (isProtecting == state)
-            {
-                return;
-            }
+            if (isProtecting == state) return;
 
             isProtecting = state;
             if (isProtecting)
             {
-                if (!hasShownProtectionMessage)
-                {
-                    if (isPracticeMode) ShowSubtitle("잘했어요! 이제 유독가스로부터 호흡기를 보호할 수 있습니다!");
-                    hasShownProtectionMessage = true;
-                }
                 if (!hasProtectionActivated)
                 {
-                    onProtectionActivated?.Invoke();
                     hasProtectionActivated = true;
-                    if (isPracticeMode) StartCoroutine(ShowNextSubtitleAfterDelay());
+                    if (isPracticeMode)
+                    {
+                        ShowSubtitle("이제 안전하게 호흡이 가능해졌습니다!");
+                        StartCoroutine(AfterWaterSequence());
+                    }
                 }
-                if (vignette != null)
-                {
-                    vignette.intensity.Override(0f);
-                }
+                if (vignette) vignette.intensity.Override(0f);
             }
-            else
+            else if (vignette)
             {
-                if (vignette != null)
-                {
-                    vignette.intensity.Override(0.8f);
-                }
+                vignette.intensity.Override(0.9f);
             }
         }
 
-        private IEnumerator ShowNextSubtitleAfterDelay()
+        private IEnumerator AfterWaterSequence()
         {
-            yield return new WaitForSeconds(5f);
+            yield return new WaitForSeconds(textDelay);
             if (isPracticeMode)
             {
-                ShowSubtitle("다음은 탈출을 위해 출입문을 찾아봅시다!");
-                if (DoorArrow != null) DoorArrow.SetActive(true);
-                if (outlineDoorObject != null) AddOutline(outlineDoorObject);
+                ShowSubtitle("다음으로는 출입문을 찾아봅시다!");
+                if (DoorArrow) DoorArrow.SetActive(true);
+                if (outlineDoorObject) AddOutline(outlineDoorObject);
             }
         }
 
         private bool IsRagTouchingHandle()
         {
-            if (ragObject == null || (doorHandle1 == null && doorHandle2 == null)) return false;
-            Collider ragCollider = ragObject.GetComponent<Collider>();
-            if (ragCollider == null) return false;
+            if (!ragObject || (!doorHandle1 && !doorHandle2)) return false;
+            var ragCollider = ragObject.GetComponent<Collider>();
+            if (!ragCollider) return false;
 
-            return (doorHandle1 != null && ragCollider.bounds.Intersects(doorHandle1.bounds)) ||
-                   (doorHandle2 != null && ragCollider.bounds.Intersects(doorHandle2.bounds));
+            return (doorHandle1 && ragCollider.bounds.Intersects(doorHandle1.bounds)) ||
+                   (doorHandle2 && ragCollider.bounds.Intersects(doorHandle2.bounds));
         }
 
-        public void SetWaterSearchTime(float time)
+        private void RecordFeedback(TMP_Text feedbackText, string message)
         {
-            waterSearchTime = time;
-            searchTimer = waterSearchTime;
-        }
-
-        void RecordFeedback(TMP_Text feedbackText, string message)
-        {
-            feedbackText.text = message;
+            if (feedbackText) feedbackText.text = message;
         }
     }
 }

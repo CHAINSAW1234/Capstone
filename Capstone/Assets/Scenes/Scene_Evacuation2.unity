@@ -26183,8 +26183,8 @@ Transform:
   m_GameObject: {fileID: 939890961}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: -0.2179, y: 0.59, z: -3.0645}
-  m_LocalScale: {x: 7.916697, y: 1, z: 3.3974473}
+  m_LocalPosition: {x: 0.1105, y: 0.56, z: -3.0645}
+  m_LocalScale: {x: 7.259611, y: 1, z: 3.3974473}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2014979216}
@@ -27491,11 +27491,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 141cb6dbc9f5b154aac53442d3a322b0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentMode: 0
+  textDelay: 5
+  pressDistance: 0.05
+  returnSpeed: 5
+  pushForce: 10
+  triggerDistance: 0.3
+  startTrigger: {fileID: 1662162661}
+  evacuationMap: {fileID: 1167116125}
+  fireAlarmButton: {fileID: 1981424198}
+  buttonTriggerTransform: {fileID: 1393866398}
+  smokeTrigger: {fileID: 1707692477}
+  smokeErrorTrigger: {fileID: 939890961}
+  smokeArrivalTrigger: {fileID: 873018780}
+  crawlingTrigger: {fileID: 939890961}
+  doorTrigger: {fileID: 393492600}
+  exitTrigger: {fileID: 1266598857}
+  elevatorTrigger: {fileID: 1347865498}
+  evacuationErrorTriggers:
+  - {fileID: 1553703614}
+  smokeEffects:
+  - {fileID: 662132543}
+  - {fileID: 2098308608}
+  outlineEvacuationMap: {fileID: 1167116125}
+  outlineEmergencyDoor: {fileID: 69262786}
   outlineColor: {r: 0, g: 1, b: 0, a: 1}
   outlineWidth: 2
-  outlineEvacuationMap: {fileID: 1167116125}
-  outlineFireAlarmButton: {fileID: 1981424198}
-  outlineEmergencyDoor: {fileID: 69262786}
   BeforeSectionArrow: {fileID: 1835007491}
   SmokeArriveArrow: {fileID: 354724996}
   startTriggerArrow: {fileID: 722853811}
@@ -27506,35 +27527,9 @@ MonoBehaviour:
   FeedbackButton: {fileID: 2138712833}
   FeedbackSmoke: {fileID: 110869932}
   FeedbackEmergency: {fileID: 1226082780}
-  textDelay: 5
-  globalVolume: {fileID: 1166567294}
-  startTrigger: {fileID: 1662162661}
-  evacuationMap: {fileID: 1167116125}
-  evacuationErrorTriggers:
-  - {fileID: 1553703614}
-  fireAlarmButton: {fileID: 1981424198}
-  buttonTriggerTransform: {fileID: 1393866398}
-  pressDistance: 0.05
-  returnSpeed: 5
-  smokeTrigger: {fileID: 1707692477}
-  smokeErrorTrigger: {fileID: 939890961}
-  smokeEffects:
-  - {fileID: 662132543}
-  - {fileID: 2098308608}
-  smokeArrivalTrigger: {fileID: 873018780}
-  crawlingTrigger: {fileID: 939890961}
-  doorTrigger: {fileID: 393492600}
-  exitTrigger: {fileID: 1266598857}
-  elevatorTrigger: {fileID: 1347865498}
   headTransform: {fileID: 1526229827}
   playSoundOnButtonPress: 1
-  soundGroupIndex: 0
-  soundClipIndex: 1
-  loopSound: 0
   onFireAlarmActivated:
-    m_PersistentCalls:
-      m_Calls: []
-  onCrawlingStarted:
     m_PersistentCalls:
       m_Calls: []
   onEmergencyDoorOpened:
@@ -30242,7 +30237,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -44116,7 +44111,7 @@ MonoBehaviour:
   rotationSpeed: 20
   moveAmplitude: 0.5
   moveSpeed: 1
-  glowSpeed: 2
+  glowSpeed: 0.1
   glowColor: {r: 0, g: 1, b: 0.12214637, a: 1}
   glowIntensity: 5
 --- !u!23 &1483329362
@@ -52053,7 +52048,7 @@ Transform:
   m_GameObject: {fileID: 1707692477}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -3.94, y: 0.227, z: -2.783}
+  m_LocalPosition: {x: -4.413, y: 0.227, z: -2.783}
   m_LocalScale: {x: 1, y: 3.2338738, z: 2.0082}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -57052,7 +57047,7 @@ Transform:
   m_GameObject: {fileID: 1835007491}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 1, w: 0}
-  m_LocalPosition: {x: 92.594, y: 2.9997053, z: 12.625}
+  m_LocalPosition: {x: 92.594, y: 2.9997053, z: 12.864}
   m_LocalScale: {x: 0.18444571, y: 0.18444571, z: 0.18444571}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -65718,42 +65713,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1ab56dad850d9b44a598b7d0877bfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineColor: {r: 0, g: 1, b: 0.08897352, a: 1}
-  outlineWidth: 2
-  outlineRagObject: {fileID: 2126963418}
-  outlineWaterObjects: []
-  outlineDoorObject: {fileID: 996431271}
-  outlineDoorHandleObject: {fileID: 832047261}
-  WaterArrow1: {fileID: 583456247}
-  WaterArrow2: {fileID: 1483329359}
-  DoorArrow: {fileID: 1563377568}
-  NextSectionArrow: {fileID: 1835007491}
-  subtitleText: {fileID: 328688184}
+  currentMode: 0
   textDelay: 5
-  FeedbackAlarm: {fileID: 1558333000}
-  FeedbackProtection: {fileID: 1328717276}
-  FeedbackDoor: {fileID: 2115899535}
-  sirenGroupIndex: 0
-  sirenClipIndex: 0
-  globalVolume: {fileID: 1166567294}
+  protectionDistance: 0.2
+  requiredTouchTime: 3
   ragObject: {fileID: 2126963418}
   waterObjects:
   - {fileID: 1499913577}
   - {fileID: 451032378}
-  headTransform: {fileID: 1526229827}
-  protectionDistance: 0.2
   doorObject: {fileID: 996431271}
   doorHandle1: {fileID: 832047263}
   doorHandle2: {fileID: 1317910262}
   frontDoorTrigger: {fileID: 1029814179}
   backDoorTrigger: {fileID: 2077209331}
-  waterSearchTime: 5
-  onProtectionActivated:
-    m_PersistentCalls:
-      m_Calls: []
-  onProtectionDeactivated:
-    m_PersistentCalls:
-      m_Calls: []
+  headTransform: {fileID: 1526229827}
+  subtitleText: {fileID: 328688184}
+  FeedbackAlarm: {fileID: 1558333000}
+  FeedbackProtection: {fileID: 1328717276}
+  FeedbackDoor: {fileID: 2115899535}
+  WaterArrow1: {fileID: 583456247}
+  WaterArrow2: {fileID: 1483329359}
+  DoorArrow: {fileID: 1563377568}
+  NextSectionArrow: {fileID: 1835007491}
+  outlineRagObject: {fileID: 2126963418}
+  outlineDoorObject: {fileID: 996431271}
+  outlineDoorHandleObject: {fileID: 832047261}
+  outlineColor: {r: 0, g: 1, b: 0.08897352, a: 1}
+  outlineWidth: 2
+  globalVolume: {fileID: 1166567294}
   leftHandController: {fileID: 248106978}
   rightHandController: {fileID: 301955771}
   vibrationIntensity: 0.5

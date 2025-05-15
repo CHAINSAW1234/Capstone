@@ -9,149 +9,95 @@ using UnityEngine.XR.Interaction.Toolkit;
 
 namespace FireEvacuation
 {
-#pragma warning disable 0618
-
     public class Section2 : MonoBehaviour
     {
         public enum Mode { Study = 0, Evaluation = 1, NULL };
         private Mode currentMode;
         private bool isPracticeMode = true;
 
-        [Header("아웃라인 설정")]
-        public Color outlineColor = Color.green; // 아웃라인 색상 (기본값: 빨간색)
-        public float outlineWidth = 2f; // 아웃라인 두께
-        public GameObject outlineEvacuationMap; // 아웃라인 적용할 안내도 오브젝트
-        public GameObject outlineFireAlarmButton; // 아웃라인 적용할 화재 경보 버튼 오브젝트
-        public GameObject outlineEmergencyDoor; // 아웃라인 적용할 비상문 오브젝트
 
-        [Header("화살표 설정")]
-        public GameObject BeforeSectionArrow; // 첫 번째 화살표 오브젝트
-        public GameObject SmokeArriveArrow; // 두 번째 화살표 오브젝트
-        public GameObject EmergencyArrow; // 두 번째 화살표 오브젝트
-        public GameObject EndArrow; // 두 번째 화살표 오브젝트
-        public GameObject ButtonArrow; // 버튼 오브젝트
+        [Header("설정")]
+        [SerializeField] private float textDelay = 5f;
+        [SerializeField] private float pressDistance = 0.05f;
+        [SerializeField] private float returnSpeed = 5f;
+        [SerializeField] private float pushForce = 10f;
+        [SerializeField] private float triggerDistance = 0.3f;
 
-        [Header("UI 설정")]
-        public TMP_Text subtitleText;
-        public TMP_Text FeedbackMap;
-        public TMP_Text FeedbackButton;
-        public TMP_Text FeedbackSmoke;
-        public TMP_Text FeedbackEmergency;
-        public float textDelay = 5f;
+        [Header("오브젝트")]
+        [SerializeField] private GameObject startTrigger;
+        [SerializeField] private GameObject evacuationMap;
+        [SerializeField] private GameObject fireAlarmButton;
+        [SerializeField] private Transform buttonTriggerTransform;
+        [SerializeField] private GameObject smokeTrigger;
+        [SerializeField] private GameObject smokeErrorTrigger;
+        [SerializeField] private GameObject smokeArrivalTrigger;
+        [SerializeField] private GameObject crawlingTrigger;
+        [SerializeField] private GameObject doorTrigger;
+        [SerializeField] private GameObject exitTrigger;
+        [SerializeField] private List<GameObject> evacuationErrorTriggers;
+        [SerializeField] private List<ParticleSystem> smokeEffects;
 
-        [Header("후처리 효과")]
-        public Volume globalVolume;
+        [Header("아웃라인")]
+        [SerializeField] private GameObject outlineEvacuationMap;
+        [SerializeField] private GameObject outlineEmergencyDoor;
+        [SerializeField] private Color outlineColor = Color.green;
+        [SerializeField] private float outlineWidth = 2f;
+
+        [Header("화살표")]
+        [SerializeField] private GameObject BeforeSectionArrow;
+        [SerializeField] private GameObject SmokeArriveArrow;
+        [SerializeField] private GameObject EmergencyArrow;
+        [SerializeField] private GameObject EndArrow;
+        [SerializeField] private GameObject ButtonArrow;
+
+        [Header("UI")]
+        [SerializeField] private TMP_Text subtitleText;
+        [SerializeField] private TMP_Text FeedbackMap;
+        [SerializeField] private TMP_Text FeedbackButton;
+        [SerializeField] private TMP_Text FeedbackSmoke;
+        [SerializeField] private TMP_Text FeedbackEmergency;
+
+        [Header("플레이어")]
+        [SerializeField] private Transform headTransform;
+
+        [Header("사운드")]
+        [SerializeField] private bool playSoundOnButtonPress = true;
+
+        [Header("이벤트")]
+        [SerializeField] private UnityEvent onFireAlarmActivated;
+        [SerializeField] private UnityEvent onCrawlingStarted;
+
         private Vignette vignette;
-
-        [Header("시작 트리거 설정")]
-        public GameObject startTrigger;
-
-        [Header("안내도 설정")]
-        public GameObject evacuationMap;
-        public List<GameObject> evacuationErrorTriggers; // 대피도 오류 콜라이더들
-
-        [Header("버튼 설정")]
-        public GameObject fireAlarmButton;
-        public Transform buttonTriggerTransform;
-        public float pressDistance = 0.05f;
-        public float returnSpeed = 5f;
-
-        [Header("연기 트리거 설정")]
-        public GameObject smokeTrigger;
-        public GameObject smokeErrorTrigger; // 연기 포복 오류 콜라이더
-        public List<ParticleSystem> smokeEffects;
-        public GameObject smokeArrivalTrigger;
-
-        [Header("Elevator Trigger 설정")]
-        public GameObject elevatorTrigger;
-        private bool hasEnteredElevator = false;
-
-        [Header("포복 트리거 설정")]
-        public GameObject crawlingTrigger;
-        private Collider crawlingTriggerCollider;
-        private bool isInsideCrawlingTrigger = false;
-
-        private GameObject emergencyDoor;
-
-        [Header("비상문 설정")]
-        public GameObject doorTrigger;
-        public GameObject exitTrigger;
-        private float pushForce = 10f;
-        private float triggerDistance = 0.3f;
-
-        [Header("Player Head Transform")]
-        public Transform headTransform;
-
-        [Header("사운드 설정")]
-        public bool playSoundOnButtonPress = true;
-        public int soundGroupIndex = 0;
-        public int soundClipIndex = 0;
-        public bool loopSound = false;
-
         private UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable buttonInteractable;
         private Rigidbody buttonRb;
         private BoxCollider buttonCollider;
         private BoxCollider buttonTriggerCollider;
         private Vector3 buttonInitialPosition;
-        private bool isButtonPressed = false;
-        private bool isButtonTriggerActivated = false;
-
         private Rigidbody doorRb;
         private HingeJoint hingeJoint;
         private BoxCollider doorTriggerCollider;
-        private bool isDoorEnabled = false;
-        private bool isDoorOpening = false;
+        private Collider crawlingTriggerCollider;
 
-        private bool hasStartedSequence = false;
-        private bool hasHighlightedMap = false;
-        private bool hasActivatedAlarm = false;
-        private bool hasEnteredSmokeArea = false;
-        private bool hasCrawled = false;
-        private bool hasReachedEmergencyDoor = false;
-        private bool hasCompletedEvacuation = false;
-
-        private bool hasRecordedSmokeError = false; // 연기 포복 오류 중복 기록 방지
-        private HashSet<int> recordedEvacuationErrorTriggers = new HashSet<int>(); // 대피도 오류 중복 기록 방지
-
-        [Header("이벤트 설정")]
-        [SerializeField] public UnityEvent onFireAlarmActivated;
-        [SerializeField] public UnityEvent onCrawlingStarted;
-        [SerializeField] public UnityEvent onEmergencyDoorOpened;
+        private bool hasStartedSequence;
+        private bool hasHighlightedMap;
+        private bool hasActivatedAlarm;
+        private bool hasEnteredSmokeArea;
+        private bool hasCrawled;
+        private bool hasReachedEmergencyDoor;
+        private bool hasCompletedEvacuation;
+        private bool hasEnteredElevator;
+        private bool isButtonPressed;
+        private bool isButtonTriggerActivated;
+        private bool isDoorEnabled;
+        private bool isDoorOpening;
+        private bool hasRecordedSmokeError;
+        private HashSet<int> recordedEvacuationErrorTriggers = new HashSet<int>();
 
         private void Start()
         {
             SetMode();
-            SetupButton();
-            InitPostProcessing();
-            SetupEvacuationMap();
-            SetupSmokeTrigger();
-            SetupEmergencyDoor();
-            SetupStartTrigger();
-            SetupErrorTriggers();
-
-            // 화살표 초기 비활성화
-            if (BeforeSectionArrow != null) BeforeSectionArrow.SetActive(false);
-            if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(false);
-            if (EmergencyArrow != null) EmergencyArrow.SetActive(false);
-            if (EndArrow != null) EndArrow.SetActive(false);
-            if (ButtonArrow != null) ButtonArrow.SetActive(false);
-
-            if (headTransform == null)
-            {
-                headTransform = Camera.main?.transform;
-                if (headTransform == null)
-                {
-                    //Debug.LogError("Head Transform (Main Camera)을 찾을 수 없습니다!");
-                }
-            }
-
-            if (!isPracticeMode)
-            {
-                if (subtitleText != null)
-                {
-                    subtitleText.gameObject.SetActive(false);
-                }
-            }
+            InitializeComponents();
+            if (!isPracticeMode && subtitleText) subtitleText.gameObject.SetActive(false);
         }
 
         void SetMode()
@@ -175,240 +121,81 @@ namespace FireEvacuation
             }
         }
 
-        void SetupStartTrigger()
+        private void InitializeComponents()
         {
-            if (startTrigger == null)
-            {
-                //Debug.LogError("시작 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
+            // Head Transform
+            headTransform ??= Camera.main?.transform;
 
-            Collider startTriggerCollider = startTrigger.GetComponent<Collider>();
-            if (startTriggerCollider == null)
-            {
-                startTriggerCollider = startTrigger.AddComponent<BoxCollider>();
-            }
-            startTriggerCollider.isTrigger = true;
-        }
+            // Arrows
+            BeforeSectionArrow?.SetActive(false);
+            SmokeArriveArrow?.SetActive(false);
+            EmergencyArrow?.SetActive(false);
+            EndArrow?.SetActive(false);
+            ButtonArrow?.SetActive(false);
 
-        void SetupButton()
-        {
-            if (fireAlarmButton == null)
+            // Button
+            if (fireAlarmButton)
             {
-                //Debug.LogError("화재 경보 버튼 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
+                buttonInteractable = fireAlarmButton.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>() ?? fireAlarmButton.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
+                buttonInteractable.hoverEntered.AddListener(OnButtonHoverEnter);
+                buttonInteractable.hoverExited.AddListener(OnButtonHoverExit);
 
-            buttonInteractable = fireAlarmButton.GetComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
-            if (buttonInteractable == null)
-            {
-                buttonInteractable = fireAlarmButton.AddComponent<UnityEngine.XR.Interaction.Toolkit.Interactables.XRSimpleInteractable>();
-            }
+                buttonRb = fireAlarmButton.GetComponent<Rigidbody>() ?? fireAlarmButton.AddComponent<Rigidbody>();
+                buttonRb.isKinematic = true;
+                buttonRb.useGravity = false;
 
-            buttonRb = fireAlarmButton.GetComponent<Rigidbody>();
-            if (buttonRb == null)
-            {
-                buttonRb = fireAlarmButton.AddComponent<Rigidbody>();
-            }
-            buttonRb.isKinematic = true;
-            buttonRb.useGravity = false;
+                buttonCollider = fireAlarmButton.GetComponent<BoxCollider>() ?? fireAlarmButton.AddComponent<BoxCollider>();
+                buttonInitialPosition = fireAlarmButton.transform.localPosition;
 
-            buttonCollider = fireAlarmButton.GetComponent<BoxCollider>();
-            if (buttonCollider == null)
-            {
-                buttonCollider = fireAlarmButton.AddComponent<BoxCollider>();
-            }
-
-            if (buttonTriggerTransform != null)
-            {
-                buttonTriggerCollider = buttonTriggerTransform.GetComponent<BoxCollider>();
-                if (buttonTriggerCollider == null)
+                if (buttonTriggerTransform)
                 {
-                    buttonTriggerCollider = buttonTriggerTransform.gameObject.AddComponent<BoxCollider>();
-                }
-                buttonTriggerCollider.isTrigger = true;
-            }
-
-            buttonInitialPosition = fireAlarmButton.transform.localPosition;
-
-            buttonInteractable.hoverEntered.AddListener(OnButtonHoverEnter);
-            buttonInteractable.hoverExited.AddListener(OnButtonHoverExit);
-
-            //Debug.Log("✅ 화재 경보 버튼 설정 완료.");
-        }
-
-        void InitPostProcessing()
-        {
-            if (globalVolume != null && globalVolume.profile.TryGet(out vignette))
-            {
-                vignette.active = true;
-                vignette.intensity.Override(0.5f);
-            }
-            else
-            {
-                //Debug.LogError("Global Volume이 지정되지 않았거나 Vignette 설정을 찾을 수 없습니다!");
-            }
-        }
-
-        void SetupEvacuationMap()
-        {
-            if (evacuationMap == null)
-            {
-                Debug.LogError("탈출 경로 안내도 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-        }
-
-        void SetupSmokeTrigger()
-        {
-            if (smokeTrigger == null)
-            {
-                //Debug.LogError("연기 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-
-            Collider triggerCollider = smokeTrigger.GetComponent<Collider>();
-            if (triggerCollider == null)
-            {
-                triggerCollider = smokeTrigger.AddComponent<BoxCollider>();
-            }
-            triggerCollider.isTrigger = true;
-
-            if (crawlingTrigger == null)
-            {
-                //Debug.LogError("포복 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-
-            crawlingTriggerCollider = crawlingTrigger.GetComponent<Collider>();
-            if (crawlingTriggerCollider == null)
-            {
-                crawlingTriggerCollider = crawlingTrigger.AddComponent<BoxCollider>();
-            }
-            crawlingTriggerCollider.isTrigger = true;
-
-            if (smokeArrivalTrigger == null)
-            {
-                //Debug.LogError("연기 도착 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-
-            Collider arrivalTriggerCollider = smokeArrivalTrigger.GetComponent<Collider>();
-            if (arrivalTriggerCollider == null)
-            {
-                arrivalTriggerCollider = smokeArrivalTrigger.AddComponent<BoxCollider>();
-            }
-            arrivalTriggerCollider.isTrigger = true;
-
-            if (smokeEffects != null && smokeEffects.Count > 0)
-            {
-                foreach (var smokeEffect in smokeEffects)
-                {
-                    if (smokeEffect != null)
-                    {
-                        smokeEffect.Stop();
-                    }
+                    buttonTriggerCollider = buttonTriggerTransform.GetComponent<BoxCollider>() ?? buttonTriggerTransform.gameObject.AddComponent<BoxCollider>();
+                    buttonTriggerCollider.isTrigger = true;
                 }
             }
-        }
 
-        void SetupEmergencyDoor()
-        {
-            if (emergencyDoor == null)
+            // Start Trigger
+            if (startTrigger)
             {
-                //Debug.LogError("비상문 오브젝트가 지정되지 않았습니다!");
-                return;
+                var collider = startTrigger.GetComponent<Collider>() ?? startTrigger.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
             }
 
-            doorRb = emergencyDoor.GetComponent<Rigidbody>();
-            if (doorRb == null)
+            // Smoke Triggers
+            if (smokeTrigger)
             {
-                doorRb = emergencyDoor.AddComponent<Rigidbody>();
+                var collider = smokeTrigger.GetComponent<Collider>() ?? smokeTrigger.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
             }
-            doorRb.mass = 1f;
-            doorRb.angularDamping = 0.05f;
-            doorRb.useGravity = true;
-            doorRb.isKinematic = false;
-            doorRb.collisionDetectionMode = CollisionDetectionMode.ContinuousDynamic;
-
-            hingeJoint = emergencyDoor.GetComponent<HingeJoint>();
-            if (hingeJoint == null)
+            if (crawlingTrigger)
             {
-                hingeJoint = emergencyDoor.AddComponent<HingeJoint>();
+                crawlingTriggerCollider = crawlingTrigger.GetComponent<Collider>() ?? crawlingTrigger.AddComponent<BoxCollider>();
+                crawlingTriggerCollider.isTrigger = true;
             }
-            hingeJoint.anchor = new Vector3(0, 1, 0.4f);
-            hingeJoint.axis = new Vector3(0, 1, 0);
-            hingeJoint.useLimits = true;
-            JointLimits limits = hingeJoint.limits;
-            limits.min = -120f;
-            limits.max = 0f;
-            limits.bounciness = 0f;
-            limits.bounceMinVelocity = 0.2f;
-            limits.contactDistance = 0f;
-            hingeJoint.limits = limits;
-
-            doorTriggerCollider = emergencyDoor.GetComponent<BoxCollider>();
-            if (doorTriggerCollider == null)
+            if (smokeArrivalTrigger)
             {
-                doorTriggerCollider = emergencyDoor.AddComponent<BoxCollider>();
+                var collider = smokeArrivalTrigger.GetComponent<Collider>() ?? smokeArrivalTrigger.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
             }
-            doorTriggerCollider.size = new Vector3(0.5f, 1f, triggerDistance);
-            doorTriggerCollider.center = new Vector3(0, 0, 0.2f);
-            doorTriggerCollider.isTrigger = true;
-
-            if (doorTrigger == null)
+            if (smokeEffects != null)
             {
-                //Debug.LogError("비상문 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
+                foreach (var effect in smokeEffects) effect?.Stop();
             }
 
-            Collider doorApproachTriggerCollider = doorTrigger.GetComponent<Collider>();
-            if (doorApproachTriggerCollider == null)
+            // Error Triggers
+            if (smokeErrorTrigger)
             {
-                doorApproachTriggerCollider = doorTrigger.AddComponent<BoxCollider>();
+                var collider = smokeErrorTrigger.GetComponent<Collider>() ?? smokeErrorTrigger.AddComponent<BoxCollider>();
+                collider.isTrigger = true;
             }
-            doorApproachTriggerCollider.isTrigger = true;
-
-            if (exitTrigger == null)
-            {
-                //Debug.LogError("비상문 반대편 트리거 오브젝트가 지정되지 않았습니다!");
-                return;
-            }
-
-            Collider exitTriggerCollider = exitTrigger.GetComponent<Collider>();
-            if (exitTriggerCollider == null)
-            {
-                exitTriggerCollider = exitTrigger.AddComponent<BoxCollider>();
-            }
-            exitTriggerCollider.isTrigger = true;
-
-            //Debug.Log("✅ 비상문 설정 완료.");
-        }
-
-        void SetupErrorTriggers()
-        {
-            if (smokeErrorTrigger != null)
-            {
-                Collider smokeErrorCollider = smokeErrorTrigger.GetComponent<Collider>();
-                if (smokeErrorCollider == null)
-                {
-                    smokeErrorCollider = smokeErrorTrigger.AddComponent<BoxCollider>();
-                }
-                smokeErrorCollider.isTrigger = true;
-            }
-
             if (evacuationErrorTriggers != null)
             {
                 foreach (var trigger in evacuationErrorTriggers)
                 {
-                    if (trigger != null)
+                    if (trigger)
                     {
-                        Collider triggerCollider = trigger.GetComponent<Collider>();
-                        if (triggerCollider == null)
-                        {
-                            triggerCollider = trigger.AddComponent<BoxCollider>();
-                        }
-                        triggerCollider.isTrigger = true;
+                        var collider = trigger.GetComponent<Collider>() ?? trigger.AddComponent<BoxCollider>();
+                        collider.isTrigger = true;
                     }
                 }
             }
@@ -416,158 +203,96 @@ namespace FireEvacuation
 
         private void OnTriggerEnter(Collider other)
         {
-            if (!isDoorEnabled || isDoorOpening)
-            {
-                return;
-            }
+            if (!isDoorEnabled || isDoorOpening || !other.CompareTag("Hand")) return;
 
-            if (other.CompareTag("Hand") && other.gameObject.transform.position.z > emergencyDoor.transform.position.z)
+            if (!hasReachedEmergencyDoor && !SequenceManager.Instance.IsStepCompleted(3))
             {
-                if (!hasReachedEmergencyDoor)
-                {
-                    if (!SequenceManager.Instance.IsStepCompleted(3))
-                    {
-                        if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
-                        SequenceManager.Instance.RecordSequenceError(3);
-                        RecordFeedback(FeedbackMap, "탈출 경로 안내도를 확인하지 않았습니다.");
-                        if (isPracticeMode) return;
-                    }
-                    if (!SequenceManager.Instance.IsStepCompleted(4))
-                    {
-                        if (isPracticeMode) ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
-                        SequenceManager.Instance.RecordSequenceError(4);
-                        RecordFeedback(FeedbackButton, "화재 경보 버튼을 누르지 않았습니다.");
-                        if (isPracticeMode) return;
-                    }
-                }
-
-                OpenDoor();
+                if (isPracticeMode) ShowSubtitle("먼저 탈출 경로 안내도를 확인해야 합니다!");
+                SequenceManager.Instance.RecordSequenceError(3);
+                RecordFeedback(FeedbackMap, "탈출 경로 안내도를 확인하지 않았습니다.");
+                if (isPracticeMode) return;
             }
+            if (!SequenceManager.Instance.IsStepCompleted(4))
+            {
+                if (isPracticeMode) ShowSubtitle("먼저 화재 경보 버튼을 눌러주세요!");
+                SequenceManager.Instance.RecordSequenceError(4);
+                RecordFeedback(FeedbackButton, "화재 경보 버튼을 누르지 않았습니다.");
+                if (isPracticeMode) return;
+            }
+            isDoorOpening = true;
+            if (outlineEmergencyDoor) RemoveOutline(outlineEmergencyDoor);
+
         }
 
-        void OpenDoor()
+        private void OnButtonHoverEnter(HoverEnterEventArgs args)
         {
-            if (doorRb != null && !isDoorOpening)
-            {
-                isDoorOpening = true;
-                Vector3 pushDirection = -emergencyDoor.transform.right;
-                doorRb.AddForceAtPosition(pushForce * pushDirection, emergencyDoor.transform.position, ForceMode.Impulse);
-                onEmergencyDoorOpened?.Invoke();
-                if (outlineEmergencyDoor != null) RemoveOutline(outlineEmergencyDoor);
-                //Debug.Log("✅ 문이 손으로 밀려 열림.");
-            }
-        }
-
-        void OnButtonHoverEnter(HoverEnterEventArgs args)
-        {
-            // 대피도 확인은 evacuationErrorTriggers로 처리하므로 여기서 오류 기록 제거
             isButtonPressed = true;
-            if (isPracticeMode) AddOutline(outlineFireAlarmButton);
         }
 
-        void OnButtonHoverExit(HoverExitEventArgs args)
+        private void OnButtonHoverExit(HoverExitEventArgs args)
         {
             isButtonPressed = false;
             isButtonTriggerActivated = false;
-            if (isPracticeMode) RemoveOutline(outlineFireAlarmButton);
         }
 
-        void Update()
+        private void Update()
         {
             if (isButtonPressed)
             {
-                Vector3 targetPosition = buttonInitialPosition + Vector3.down * pressDistance;
+                var targetPosition = buttonInitialPosition + Vector3.down * pressDistance;
                 fireAlarmButton.transform.localPosition = Vector3.Lerp(fireAlarmButton.transform.localPosition, targetPosition, Time.deltaTime * returnSpeed);
                 CheckButtonTriggerCollision();
             }
-            else
+            else if (fireAlarmButton)
             {
                 fireAlarmButton.transform.localPosition = Vector3.Lerp(fireAlarmButton.transform.localPosition, buttonInitialPosition, Time.deltaTime * returnSpeed);
             }
 
             CheckTriggerCollision();
-            CheckElevatorTrigger();
         }
 
-        void CheckElevatorTrigger()
+        private void CheckButtonTriggerCollision()
         {
-            if (hasEnteredElevator || elevatorTrigger == null || headTransform == null) return;
+            if (!buttonTriggerCollider || !buttonCollider.bounds.Intersects(buttonTriggerCollider.bounds) || isButtonTriggerActivated) return;
 
-            Collider elevatorTriggerCollider = elevatorTrigger.GetComponent<Collider>();
-            if (elevatorTriggerCollider != null && elevatorTriggerCollider.bounds.Contains(headTransform.position))
+            onFireAlarmActivated?.Invoke();
+            isButtonTriggerActivated = true;
+            hasActivatedAlarm = true;
+            SequenceManager.Instance.CompleteStep(4);
+            if (isPracticeMode) ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동해봅시다!");
+            if (ButtonArrow) ButtonArrow.SetActive(false);
+
+            if (playSoundOnButtonPress && SoundManager.Instance)
             {
-                hasEnteredElevator = true;
-                StartCoroutine(ElevatorSequence());
+                SoundManager.Instance.PlayOneShot(0, 1);
             }
         }
 
-        void CheckButtonTriggerCollision()
+        private void CheckTriggerCollision()
         {
-            if (buttonTriggerCollider == null) return;
+            if (!headTransform) return;
 
-            if (buttonCollider.bounds.Intersects(buttonTriggerCollider.bounds))
+            // Evacuation Error Triggers
+            foreach (var trigger in evacuationErrorTriggers ?? new List<GameObject>())
             {
-                if (!isButtonTriggerActivated)
+                if (!trigger) continue;
+                var collider = trigger.GetComponent<Collider>();
+                var triggerId = trigger.GetInstanceID();
+                if (collider?.bounds.Contains(headTransform.position) == true && !recordedEvacuationErrorTriggers.Contains(triggerId))
                 {
-                    // 대피도 확인은 evacuationErrorTriggers로 처리하므로 여기서 오류 기록 제거
-                    onFireAlarmActivated?.Invoke();
-                    isButtonTriggerActivated = true;
-                    hasActivatedAlarm = true;
-                    SequenceManager.Instance.CompleteStep(4);
-                    if (outlineFireAlarmButton != null) RemoveOutline(outlineFireAlarmButton);
-                    if (isPracticeMode) ShowSubtitle("화재 경보가 활성화되었습니다! 이제 안전하게 이동해봅시다!");
-                    if (ButtonArrow != null) ButtonArrow.SetActive(false);
-
-                    if (playSoundOnButtonPress)
-                    {
-                        if (SoundManager.Instance == null)
-                        {
-                            //Debug.LogError("SoundManager.Instance is null! Cannot play sound.");
-                            return;
-                        }
-                        try
-                        {
-                            SoundManager.Instance.PlayOneShot(soundGroupIndex, soundClipIndex);
-                        }
-                        catch (System.Exception e)
-                        {
-                            //Debug.LogError("사운드 재생 중 오류 발생: " + e.Message);
-                        }
-                    }
-                }
-            }
-        }
-
-        void CheckTriggerCollision()
-        {
-            if (headTransform == null) return;
-
-            // 대피도 오류 콜라이더 검사
-            if (evacuationErrorTriggers != null)
-            {
-                foreach (var trigger in evacuationErrorTriggers)
-                {
-                    if (trigger != null)
-                    {
-                        Collider triggerCollider = trigger.GetComponent<Collider>();
-                        int triggerId = trigger.GetInstanceID();
-                        if (triggerCollider != null && triggerCollider.bounds.Contains(headTransform.position) && !recordedEvacuationErrorTriggers.Contains(triggerId))
-                        {
-                            if (isPracticeMode) ShowSubtitle("잘못된 대피 경로 입니다! 맵을 확인하세요.");
-                            SequenceManager.Instance.RecordSequenceError(3);
-                            RecordFeedback(FeedbackMap, "잘못된 탈출 경로로 이동했습니다.");
-                            recordedEvacuationErrorTriggers.Add(triggerId);
-                            if (isPracticeMode) return;
-                        }
-                    }
+                    if (isPracticeMode) ShowSubtitle("잘못된 대피 경로 입니다! 대피도를 확인하세요.");
+                    SequenceManager.Instance.RecordSequenceError(3);
+                    RecordFeedback(FeedbackMap, "잘못된 탈출 경로로 이동했습니다.");
+                    recordedEvacuationErrorTriggers.Add(triggerId);
+                    if (isPracticeMode) return;
                 }
             }
 
-            // 연기 포복 오류 콜라이더 검사
-            if (smokeErrorTrigger != null && !hasCrawled && !hasRecordedSmokeError)
+            // Smoke Error Trigger
+            if (smokeErrorTrigger && !hasCrawled && !hasRecordedSmokeError)
             {
-                Collider smokeErrorCollider = smokeErrorTrigger.GetComponent<Collider>();
-                if (smokeErrorCollider != null && smokeErrorCollider.bounds.Contains(headTransform.position))
+                var collider = smokeErrorTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     if (isPracticeMode) ShowSubtitle("머리의 위치가 너무 높습니다! 포복으로 이동해주세요.");
                     SequenceManager.Instance.RecordSequenceError(5);
@@ -577,20 +302,22 @@ namespace FireEvacuation
                 }
             }
 
-            if (!hasStartedSequence && startTrigger != null)
+            // Start Trigger
+            if (!hasStartedSequence && startTrigger)
             {
-                Collider startTriggerCollider = startTrigger.GetComponent<Collider>();
-                if (startTriggerCollider != null && startTriggerCollider.bounds.Contains(headTransform.position))
+                var collider = startTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     hasStartedSequence = true;
                     StartCoroutine(EvacuationSequence());
                 }
             }
 
-            if (!hasEnteredSmokeArea && smokeTrigger != null)
+            // Smoke Trigger
+            if (!hasEnteredSmokeArea && smokeTrigger)
             {
-                Collider smokeTriggerCollider = smokeTrigger.GetComponent<Collider>();
-                if (smokeTriggerCollider != null && smokeTriggerCollider.bounds.Contains(headTransform.position))
+                var collider = smokeTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
@@ -604,10 +331,11 @@ namespace FireEvacuation
                 }
             }
 
-            if (!hasCrawled && smokeArrivalTrigger != null)
+            // Smoke Arrival Trigger
+            if (!hasCrawled && smokeArrivalTrigger)
             {
-                Collider arrivalTriggerCollider = smokeArrivalTrigger.GetComponent<Collider>();
-                if (arrivalTriggerCollider != null && arrivalTriggerCollider.bounds.Contains(headTransform.position))
+                var collider = smokeArrivalTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
@@ -622,16 +350,17 @@ namespace FireEvacuation
                     if (isPracticeMode)
                     {
                         ShowSubtitle("잘했어요! 포복을 완료했습니다. 이제 비상문으로 이동해봅시다!");
-                        if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(false);
-                        if (EmergencyArrow != null) EmergencyArrow.SetActive(true);
+                        if (SmokeArriveArrow) SmokeArriveArrow.SetActive(false);
+                        if (EmergencyArrow) EmergencyArrow.SetActive(true);
                     }
                 }
             }
 
-            if (!hasReachedEmergencyDoor && doorTrigger != null)
+            // Door Trigger
+            if (!hasReachedEmergencyDoor && doorTrigger)
             {
-                Collider doorApproachTriggerCollider = doorTrigger.GetComponent<Collider>();
-                if (doorApproachTriggerCollider != null && doorApproachTriggerCollider.bounds.Contains(headTransform.position))
+                var collider = doorTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     if (!SequenceManager.Instance.IsStepCompleted(4))
                     {
@@ -646,190 +375,121 @@ namespace FireEvacuation
                 }
             }
 
-            if (!hasCompletedEvacuation && exitTrigger != null)
+            // Exit Trigger
+            if (!hasCompletedEvacuation && exitTrigger)
             {
-                Collider exitTriggerCollider = exitTrigger.GetComponent<Collider>();
-                if (exitTriggerCollider != null && exitTriggerCollider.bounds.Contains(headTransform.position))
+                var collider = exitTrigger.GetComponent<Collider>();
+                if (collider?.bounds.Contains(headTransform.position) == true)
                 {
                     hasCompletedEvacuation = true;
                     if (isPracticeMode)
                     {
                         ShowSubtitle("축하합니다 모든 화재 대피 훈련이 완료되었습니다! 이제 밖으로 대피하여 훈련을 완료하세요.");
-                        if (EndArrow != null) EndArrow.SetActive(true);
+                        if (EndArrow) EndArrow.SetActive(true);
                     }
-                    onEmergencyDoorOpened?.Invoke();
                 }
             }
         }
 
-        IEnumerator EvacuationSequence()
+        private IEnumerator EvacuationSequence()
         {
             if (isPracticeMode)
             {
                 ShowSubtitle("건물 밖으로 대피 시 대피 경로를 파악하는 것이 가장 중요합니다.");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("먼저 앞에 있는 탈출 경로 안내도를 확인하여 대피 경로를 파악하세요.");
-                AddOutlineToEvacuationMap();
+                if (outlineEvacuationMap) AddOutline(outlineEvacuationMap);
+                hasHighlightedMap = true;
+                SequenceManager.Instance.CompleteStep(3);
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("안내도를 확인한 후, 화재 경보 버튼을 눌러 주변에 위험을 알려야 합니다.");
-                if (ButtonArrow != null) ButtonArrow.SetActive(true);
+                if (ButtonArrow) ButtonArrow.SetActive(true);
+                if (outlineEvacuationMap) RemoveOutline(outlineEvacuationMap);
                 yield return new WaitForSeconds(textDelay);
             }
-            else
-            {
-                AddOutlineToEvacuationMap();
-            }
+            hasHighlightedMap = true;
+            SequenceManager.Instance.CompleteStep(3);
         }
 
-        IEnumerator ElevatorSequence()
+        private IEnumerator SmokeSequence()
         {
-            if (isPracticeMode)
+            foreach (var effect in smokeEffects ?? new List<ParticleSystem>())
             {
-                ShowSubtitle("화재 대피 시 엘리베이터 사용은 전원 차단의 위험이 있습니다.");
-                yield return new WaitForSeconds(textDelay);
-                ShowSubtitle("엘리베이터 대신 가까운 비상 계단으로 이동하세요.");
-                yield return new WaitForSeconds(textDelay);
-                SequenceManager.Instance.RecordSequenceError(3);
-                RecordFeedback(FeedbackMap, "대피 과정에서 엘리베이터를 이용했습니다.");
-            }
-        }
-
-        IEnumerator SmokeSequence()
-        {
-            if (smokeEffects != null && smokeEffects.Count > 0)
-            {
-                foreach (var smokeEffect in smokeEffects)
-                {
-                    if (smokeEffect != null)
-                    {
-                        smokeEffect.Play();
-                    }
-                }
+                effect?.Play();
             }
 
-            if (SoundManager.Instance != null)
+            if (SoundManager.Instance)
             {
-                try
-                {
-                    SoundManager.Instance.PlayOneShot(1, 0);
-                }
-                catch (System.Exception e)
-                {
-                    //Debug.LogError("연기 사운드 재생 중 오류 발생: " + e.Message);
-                }
-            }
-            else
-            {
-                //Debug.LogError("SoundManager.Instance is null! 연기 사운드 재생 실패.");
+                SoundManager.Instance.PlayOneShot(1, 0);
             }
 
             if (isPracticeMode)
             {
                 ShowSubtitle("화재로 인해 주변에 연기가 가득해졌습니다.");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("화재로 발생한 연기는 독성이 있어 오래 노출되면 위험합니다!");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("연기는 위로 올라가는 성질이 있으므로, 낮게 엎드려 포복으로 다음 위치까지 이동 해봅시다.");
+                if (SmokeArriveArrow) SmokeArriveArrow.SetActive(true);
                 yield return new WaitForSeconds(textDelay);
-                if (SmokeArriveArrow != null) SmokeArriveArrow.SetActive(true);
             }
         }
 
-        IEnumerator EmergencyDoorSequence()
+        private IEnumerator EmergencyDoorSequence()
         {
             if (isPracticeMode)
             {
-                if (EmergencyArrow != null) EmergencyArrow.SetActive(false);
+                if (EmergencyArrow) EmergencyArrow.SetActive(false);
                 ShowSubtitle("비상문에 도착했습니다! 다음은 비상문 통과에 대해 배워봅시다.");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("실제 화재 상황에서는 비상문을 막다른 길로 오해해 위험에 처하는 경우가 많습니다.");
                 yield return new WaitForSeconds(textDelay);
-
                 ShowSubtitle("비상문에 도착하면 '비상문'이라는 글을 찾아 문의 위치를 확인해야합니다.");
                 yield return new WaitForSeconds(textDelay);
-
+                if (outlineEmergencyDoor) AddOutline(outlineEmergencyDoor);
                 ShowSubtitle("해당 문의 한 쪽을 미는 것 만으로 가볍게 문이 열립니다. 한 번 열어봅시다.");
-                AddOutlineToEmergencyDoor();
                 isDoorEnabled = true;
                 yield return new WaitForSeconds(textDelay);
             }
             else
             {
                 isDoorEnabled = true;
-                AddOutlineToEmergencyDoor();
             }
         }
 
-        void ShowSubtitle(string message)
+        private void ShowSubtitle(string message)
         {
-            if (subtitleText != null && isPracticeMode)
+            if (subtitleText && isPracticeMode)
             {
                 subtitleText.color = Color.black;
                 subtitleText.text = message;
             }
         }
 
-        void RecordFeedback(TMP_Text feedbackText, string message)
+        private void RecordFeedback(TMP_Text feedbackText, string message)
         {
-            feedbackText.text = message;
+            if (feedbackText) feedbackText.text = message;
         }
 
-        void AddOutline(GameObject target)
+        private void AddOutline(GameObject target)
         {
-            if (target == null || !isPracticeMode) return;
-
-            Outline outline = target.GetComponent<Outline>();
-            if (outline == null)
-            {
-                outline = target.AddComponent<Outline>();
-            }
-
+            if (!target || !isPracticeMode) return;
+            var outline = target.GetComponent<Outline>() ?? target.AddComponent<Outline>();
             outline.OutlineMode = Outline.Mode.OutlineAll;
             outline.OutlineColor = outlineColor;
             outline.OutlineWidth = outlineWidth;
             outline.enabled = true;
         }
 
-        void RemoveOutline(GameObject target)
+        private void RemoveOutline(GameObject target)
         {
-            if (target == null) return;
-
-            Outline outline = target.GetComponent<Outline>();
-            if (outline != null)
-            {
-                outline.enabled = false;
-            }
-        }
-
-        void AddOutlineToEvacuationMap()
-        {
-            if (outlineEvacuationMap != null && !hasHighlightedMap)
-            {
-                AddOutline(outlineEvacuationMap);
-                hasHighlightedMap = true;
-                SequenceManager.Instance.CompleteStep(3);
-            }
-        }
-
-        void AddOutlineToEmergencyDoor()
-        {
-            if (outlineEmergencyDoor != null)
-            {
-                AddOutline(outlineEmergencyDoor);
-            }
+            if (!target) return;
+            if (target.TryGetComponent<Outline>(out var outline)) outline.enabled = false;
         }
 
         private void OnDestroy()
         {
-            if (doorTriggerCollider != null)
-            {
-                Destroy(doorTriggerCollider);
-            }
+            if (doorTriggerCollider) Destroy(doorTriggerCollider);
         }
     }
 }

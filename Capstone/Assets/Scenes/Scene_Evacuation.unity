@@ -4111,7 +4111,6 @@ GameObject:
   - component: {fileID: 139766654}
   - component: {fileID: 139766653}
   - component: {fileID: 139766652}
-  - component: {fileID: 139766651}
   - component: {fileID: 139766650}
   - component: {fileID: 139766649}
   - component: {fileID: 139766648}
@@ -4327,20 +4326,6 @@ Rigidbody:
   m_Interpolate: 0
   m_Constraints: 0
   m_CollisionDetection: 2
---- !u!114 &139766651
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 139766646}
-  m_Enabled: 0
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7095b99e0f6c298478148ea517c606ec, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
-  doorHandle1: {fileID: 2096685393}
-  doorHandle2: {fileID: 1833079020}
 --- !u!65 &139766652
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -10355,7 +10340,7 @@ Transform:
   m_GameObject: {fileID: 329375447}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: 1, w: 0}
-  m_LocalPosition: {x: 118.81, y: 3.484, z: 18.287}
+  m_LocalPosition: {x: 118.81, y: 3.484, z: 18.3}
   m_LocalScale: {x: 0.1114089, y: 0.1114089, z: 0.1114089}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -28153,8 +28138,8 @@ Transform:
   m_GameObject: {fileID: 939890961}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 8, y: 0.76, z: -9.32}
-  m_LocalScale: {x: 16.733416, y: 1, z: 28.77943}
+  m_LocalPosition: {x: 1.53, y: 0.76, z: -9.3}
+  m_LocalScale: {x: 6.656553, y: 1, z: 6.195274}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 2014979216}
@@ -29702,11 +29687,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cde29618a57ab44bac168c0b85e6f94, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentMode: 0
+  textDelay: 5
+  pressDistance: 0.05
+  returnSpeed: 5
+  pushForce: 10
+  triggerDistance: 0.3
+  startTrigger: {fileID: 1662162661}
+  evacuationMap: {fileID: 1167116125}
+  fireAlarmButton: {fileID: 1981424198}
+  buttonTriggerTransform: {fileID: 1393866398}
+  smokeTrigger: {fileID: 1707692477}
+  smokeErrorTrigger: {fileID: 939890961}
+  smokeArrivalTrigger: {fileID: 873018780}
+  crawlingTrigger: {fileID: 939890961}
+  doorTrigger: {fileID: 393492600}
+  exitTrigger: {fileID: 1266598857}
+  evacuationErrorTriggers:
+  - {fileID: 408375351}
+  - {fileID: 732236669}
+  smokeEffects:
+  - {fileID: 662132543}
+  - {fileID: 2098308608}
+  outlineEvacuationMap: {fileID: 1167116125}
+  outlineEmergencyDoor: {fileID: 69262786}
   outlineColor: {r: 0.054504752, g: 1, b: 0, a: 1}
   outlineWidth: 4
-  outlineEvacuationMap: {fileID: 1167116125}
-  outlineFireAlarmButton: {fileID: 1981424198}
-  outlineEmergencyDoor: {fileID: 69262786}
   BeforeSectionArrow: {fileID: 210073634}
   SmokeArriveArrow: {fileID: 1022752616}
   EmergencyArrow: {fileID: 1186825281}
@@ -29717,39 +29723,12 @@ MonoBehaviour:
   FeedbackButton: {fileID: 1554094095}
   FeedbackSmoke: {fileID: 921738686}
   FeedbackEmergency: {fileID: 864740964}
-  textDelay: 5
-  globalVolume: {fileID: 58739958}
-  startTrigger: {fileID: 1662162661}
-  evacuationMap: {fileID: 1167116125}
-  evacuationErrorTriggers:
-  - {fileID: 408375351}
-  - {fileID: 732236669}
-  fireAlarmButton: {fileID: 1981424198}
-  buttonTriggerTransform: {fileID: 1393866398}
-  pressDistance: 0.05
-  returnSpeed: 5
-  smokeTrigger: {fileID: 1707692477}
-  smokeErrorTrigger: {fileID: 939890961}
-  smokeEffects:
-  - {fileID: 662132543}
-  - {fileID: 2098308608}
-  smokeArrivalTrigger: {fileID: 873018780}
-  elevatorTrigger: {fileID: 0}
-  crawlingTrigger: {fileID: 939890961}
-  doorTrigger: {fileID: 393492600}
-  exitTrigger: {fileID: 1266598857}
   headTransform: {fileID: 1450560188}
   playSoundOnButtonPress: 1
-  soundGroupIndex: 0
-  soundClipIndex: 1
-  loopSound: 0
   onFireAlarmActivated:
     m_PersistentCalls:
       m_Calls: []
   onCrawlingStarted:
-    m_PersistentCalls:
-      m_Calls: []
-  onEmergencyDoorOpened:
     m_PersistentCalls:
       m_Calls: []
 --- !u!1 &991898225
@@ -31454,7 +31433,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   rotationSpeed: 20
-  moveAmplitude: 0.5
+  moveAmplitude: 0.1
   moveSpeed: 1
   glowSpeed: 2
   glowColor: {r: 0, g: 1, b: 0.12214637, a: 1}
@@ -32299,7 +32278,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -47729,44 +47708,34 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c1ab56dad850d9b44a598b7d0877bfb1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  outlineColor: {r: 0, g: 1, b: 0.10369277, a: 1}
-  outlineWidth: 4
-  outlineRagObject: {fileID: 145118587}
-  outlineWaterObjects:
-  - {fileID: 299133069}
-  - {fileID: 121569375}
-  outlineDoorObject: {fileID: 139766646}
-  outlineDoorHandleObject: {fileID: 2096685391}
-  WaterArrow1: {fileID: 1624700320}
-  WaterArrow2: {fileID: 1018843291}
-  DoorArrow: {fileID: 887634567}
-  NextSectionArrow: {fileID: 210073634}
-  subtitleText: {fileID: 328688184}
+  currentMode: 0
   textDelay: 5
-  FeedbackAlarm: {fileID: 547638935}
-  FeedbackProtection: {fileID: 2091093836}
-  FeedbackDoor: {fileID: 894084553}
-  sirenGroupIndex: 0
-  sirenClipIndex: 0
-  globalVolume: {fileID: 58739958}
+  protectionDistance: 0.2
+  requiredTouchTime: 3
   ragObject: {fileID: 145118587}
   waterObjects:
   - {fileID: 299133069}
   - {fileID: 1129613416}
-  headTransform: {fileID: 1450560188}
-  protectionDistance: 0.2
   doorObject: {fileID: 139766646}
   doorHandle1: {fileID: 2096685393}
   doorHandle2: {fileID: 1833079020}
   frontDoorTrigger: {fileID: 1957708558}
   backDoorTrigger: {fileID: 1976983205}
-  waterSearchTime: 5
-  onProtectionActivated:
-    m_PersistentCalls:
-      m_Calls: []
-  onProtectionDeactivated:
-    m_PersistentCalls:
-      m_Calls: []
+  headTransform: {fileID: 1450560188}
+  subtitleText: {fileID: 328688184}
+  FeedbackAlarm: {fileID: 547638935}
+  FeedbackProtection: {fileID: 2091093836}
+  FeedbackDoor: {fileID: 894084553}
+  WaterArrow1: {fileID: 1624700320}
+  WaterArrow2: {fileID: 1018843291}
+  DoorArrow: {fileID: 887634567}
+  NextSectionArrow: {fileID: 210073634}
+  outlineRagObject: {fileID: 145118587}
+  outlineDoorObject: {fileID: 139766646}
+  outlineDoorHandleObject: {fileID: 2096685391}
+  outlineColor: {r: 0, g: 1, b: 0.10369277, a: 1}
+  outlineWidth: 4
+  globalVolume: {fileID: 58739958}
   leftHandController: {fileID: 515508465}
   rightHandController: {fileID: 516450785}
   vibrationIntensity: 0.5
@@ -48014,7 +47983,7 @@ AudioSource:
   m_PlayOnAwake: 1
   m_Volume: 1
   m_Pitch: 1
-  Loop: 0
+  Loop: 1
   Mute: 0
   Spatialize: 0
   SpatializePostEffects: 0
@@ -62413,6 +62382,8 @@ GameObject:
   - component: {fileID: 2096685395}
   - component: {fileID: 2096685394}
   - component: {fileID: 2096685396}
+  - component: {fileID: 2096685398}
+  - component: {fileID: 2096685397}
   m_Layer: 0
   m_Name: DoorHandle1
   m_TagString: Untagged
@@ -62531,6 +62502,41 @@ MeshRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_AdditionalVertexStreams: {fileID: 0}
+--- !u!54 &2096685397
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2096685391}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 1
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
+--- !u!33 &2096685398
+MeshFilter:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2096685391}
+  m_Mesh: {fileID: 0}
 --- !u!198 &2098308608 stripped
 ParticleSystem:
   m_CorrespondingSourceObject: {fileID: 5299146926960630741, guid: 57970c6bb711ec24b8d98424b1806f3b, type: 3}
