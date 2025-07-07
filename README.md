@@ -124,7 +124,7 @@ VR 기반 훈련 시스템은 몰입도를 높여 실습 중심의 교육 효과
 - Oculus Quest 2 (또는 호환 가능한 VR 기기)
 - XR Interaction Toolkit 설치
 
-### 설치방
+### 설치방법
 1. 이 저장소를 클론합니다:
    ```bash
    git clone https://github.com/[Your-GitHub-Username]/[Your-Repo-Name].git
