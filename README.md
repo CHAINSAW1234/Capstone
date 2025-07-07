@@ -35,7 +35,15 @@ VR 기반 훈련 시스템은 몰입도를 높여 실습 중심의 교육 효과
 
 
 ## 시스템 구성도
-<img src="https://github.com/system.png" width="1000">
+<img src="[https://github.com/system.png](https://github.com/user-attachments/assets/41c8d213-bf9d-4c96-a54a-73a8169c6c02)" width="1000">
+
+![Image](https://github.com/user-attachments/assets/c1723aa3-ea5f-48b3-bc43-b35b5068707e)
+
+![Image](https://github.com/user-attachments/assets/8a80e947-3ca9-41cf-80d2-d8e9f35ade86)
+
+![Image](https://github.com/user-attachments/assets/49135f18-88c2-440d-80ea-bfdc54fb7935)
+
+![Image](https://github.com/user-attachments/assets/321afb44-0c81-490b-aedd-10cff0af300c)
 
 
 ## 씬 구성도
